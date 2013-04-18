@@ -61,7 +61,7 @@ my $results_table = save_settings(
                                   0,               0
 );
 
-my %protein_residuemass = protein_residuemass($results_table);
+my %protein_residuemass = protein_residuemass($results_table, $dbh);
 my %modifications = modifications($mono_mass_diff, $xlinker_mass, $reactive_site, $results_table, $dbh);
 
 #Output page
