@@ -22,8 +22,8 @@ my @peptides;
 
 
 for (my $i=$min_length; $i < $max_length;  $i++) {
-while ($sequence =~ m/(.{$i}(?=$reactive_site([^KR]*[KR])))/g) {
-    push @peptides, "$1K$2";
+while ($sequence =~ m/((?=(.{$i})$reactive_site([^KR]*[KR])))/g) {
+    push @peptides, "$2$reactive_site$3";
 #     warn "$1 $reactive_site $2"
 }
 }

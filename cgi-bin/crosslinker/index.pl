@@ -102,7 +102,7 @@ if ( $development_setting->{'setting1'} == 1) {
 
 <label>Digest Type<label>
   <select name="non_specific_digest"> 
-<option value="O" selected="true">Off</option>
+<option value="0" selected="true">Off</option>
 <option value="1">No Enzyme</option>
 <option value="2">Amino Peptidase/Trypsin</option>
   </select>
