@@ -79,6 +79,9 @@ sub generate_page {
           digest_proteins($missed_clevages, $sequence, $cut_residues, $nocut_residues, $n_or_c);
 	  @sequence_fragments             = @{$sequence_fragments_ref};
 	  @sequence_fragments_linear_only = @{$sequence_fragments_linear_only_ref};
+	} elsif ($non_specific_digest == 2) {
+	    ($sequence_fragments_ref) = amino_peptidase_digest($no_enzyme_min, $no_enzyme_max, $reactive_site, $sequence);
+	    @sequence_fragments             = @{$sequence_fragments_ref};
 	} else {
 	    ($sequence_fragments_ref) = no_enzyme_digest_proteins($no_enzyme_min, $no_enzyme_max, $reactive_site, $sequence);
 	    @sequence_fragments             = @{$sequence_fragments_ref};

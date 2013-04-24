@@ -11,8 +11,26 @@ our @EXPORT = (
                'crosslink_peptides', 'calculate_peptide_masses',
                'calculate_crosslink_peptides', 'calculate_amber_crosslink_peptides',
 	       'generate_monolink_peptides', 'generate_modified_peptides',
-	       'no_enzyme_digest_proteins',
+	       'no_enzyme_digest_proteins','amino_peptidase_digest',
 );
+
+sub amino_peptidase_digest {
+
+my ($min_length, $max_length, $reactive_site, $sequence) = @_;
+
+my @peptides;
+
+
+for (my $i=$min_length; $i < $max_length;  $i++) {
+while ($sequence =~ m/(.{$i}(?=$reactive_site([^KR]*[KR])))/g) {
+    push @peptides, "$1K$2";
+#     warn "$1 $reactive_site $2"
+}
+}
+
+return \@peptides;
+
+}
 
 sub no_enzyme_digest_proteins {
 
