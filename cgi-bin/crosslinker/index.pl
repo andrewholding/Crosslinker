@@ -97,9 +97,19 @@ my $development = get_conf($dbh, 'development');
 my $development_setting = $development->fetchrow_hashref();
 
 if ( $development_setting->{'setting1'} == 1) {
-    print '<legend>No Enzyme</legend><div class="row">';
-    print '<div class="span4"><label class="checkbox inline" ><input type="checkbox" name="proteinase_k" value="true" >
-    No&nbsp;enzyme</label></div></div><br/>';
+    print '<legend>Non-Specific Enzymes</legend><div class="row">';
+    print '<div class="span4">
+
+<label>Digest Type<label>
+  <select name="non_specific_digest"> 
+<option value="O" selected="true">Off</option>
+<option value="1">No Enzyme</option>
+<option value="2">Amino Peptidase/Trypsin</option>
+  </select>
+</div>
+
+</div><br/>';
+
 print'
 <div class="row">
 <div class="span4">

@@ -165,7 +165,7 @@ sub create_settings {
 						      scored_ions,
 						      amber,
 						      time,
-						      proteinase_k,
+						      non_specific_digest,
 						      no_enzyme_min,
 						      no_enzyme_max
 						) "
@@ -323,7 +323,7 @@ sub save_settings {
         $xlinker_mass, $state,           $desc,              $decoy,          $ms2_da,
         $ms1_ppm,      $mass_seperation, $dynamic_mods_ref,  $fixed_mods_ref, $threshold,
         $match_charge, $match_intensity, $scored_ions, $amber_codon ,
-        $proteinase_k, $no_enzyme_min, $no_enzyme_max
+        $non_specific_digest, $no_enzyme_min, $no_enzyme_max
     ) = @_;
 
     if (!defined $amber_codon) {$amber_codon = 0;};
@@ -350,7 +350,7 @@ sub save_settings {
 						      scored_ions,
 						      amber,
 						      time,
-						      proteinase_k,
+						      non_specific_digest,
 						      no_enzyme_min,
 						      no_enzyme_max
 						 ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
@@ -367,7 +367,7 @@ sub save_settings {
                                $mono_mass_diff, $xlinker_mass,    $decoy,             $ms2_da,
                                $ms1_ppm,        $state,           $mass_seperation,   $threshold,
                                $match_charge,   $match_intensity, $scored_ions,       $amber_codon,
-				time,       	$proteinase_k, 	  $no_enzyme_min,     $no_enzyme_max
+				time,       	$non_specific_digest, 	  $no_enzyme_min,     $no_enzyme_max
         );
     };
 
@@ -558,13 +558,13 @@ sub import_cgi_query {
     my $no_xlink_at_cut_site = 1;
     my $ms1_intensity_ratio  = 1;
     my $fast_mode            = 1;
-    my $proteinase_k	     = 0;
+    my $non_specific_digest	     = 0;
     my $no_enzyme_max	     = 6;
     my $no_enzyme_min	     = 0;
 
 
     if (defined $query->param('ms1_intensity_ratio')) { $ms1_intensity_ratio = $query->param('ms1_intensity_ratio') }
-    if (defined $query->param('proteinase_k'))	      { $proteinase_k = 1; }
+    if (defined $query->param('non_specific_digest'))	      { $non_specific_digest = $query->param('non_specific_digest'); }
     if (defined $query->param('no_enzyme_min'))      { $no_enzyme_min = $query->param('no_enzyme_min'); }
     if (defined $query->param('no_enzyme_max'))      { $no_enzyme_max = $query->param('no_enzyme_max'); }
     if (defined $query->param('detailed_scoring'))    { $fast_mode           = 0 }
@@ -657,7 +657,7 @@ sub import_cgi_query {
             $mono_mass_diff,      $xlinker_mass,    \@dynamic_mods,     \@fixed_mods,
             \%ms2_fragmentation,  $threshold,       $n_or_c,            $scan_width,
             $match_charge,        $match_intensity, $scored_ions,       $no_xlink_at_cut_site,
-            $ms1_intensity_ratio, $fast_mode,       $doublet_tolerance, $upload_format, $amber_codon, $proteinase_k,
+            $ms1_intensity_ratio, $fast_mode,       $doublet_tolerance, $upload_format, $amber_codon, $non_specific_digest,
 	    $no_enzyme_min,	 $no_enzyme_max
     );
 }
