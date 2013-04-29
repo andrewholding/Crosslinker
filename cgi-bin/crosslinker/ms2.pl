@@ -14,7 +14,9 @@ use DBI;
 use lib 'lib';
 use Crosslinker::Constants;
 use Crosslinker::Proteins;
+use Crosslinker::Data;
 use Crosslinker::Scoring;
+use Crosslinker::UserSettings;
 use Crosslinker::HTML;
 
 #loads database modules
@@ -54,9 +56,13 @@ my (
     $mass_of_deuterium, $mass_of_hydrogen, $mass_of_proton,     $mass_of_carbon12,
     $mass_of_carbon13,  $no_of_fractions,  $min_peptide_length, $scan_width
 ) = constants;
-my %residuemass = protein_residuemass($table);
 
-my %modifications = modifications($monolink, $xlink, $xlink_res, $table);
+
+my $settings_dbh = connect_settings;
+my %residuemass = protein_residuemass($table, $settings_dbh);
+my %modifications = modifications($monolink, $xlink, $xlink_res, $table, $settings_dbh);
+
+
 
 my $terminalmass = 1.0078250 * 2 + 15.9949146 * 1;
 my $ms2_error = 1;      #Dalton error for assigin an ion to a pair of ions between the two spectra

@@ -15,6 +15,7 @@ use lib 'lib';
 use Crosslinker::HTML;
 use Crosslinker::Results;
 use Crosslinker::Constants;
+use Crosslinker::Data;
 
 ########################
 #                      #
@@ -32,7 +33,7 @@ my $peptide = $query->param('peptide');
 #                      #
 ########################
 
-my $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+my $settings_dbh = connect_settings;
 
 my $settings_sql = $settings_dbh->prepare("SELECT name FROM settings WHERE name = ?");
 $settings_sql->execute($table);
@@ -94,9 +95,10 @@ print_results(
               $mass_of_carbon13, $cut_residues,     $protein_sequences, $reactive_site,
               $results_dbh,      $xlinker_mass,     $mono_mass_diff,    $table,
               $mass_seperation,  1,                 1,                  0,
-              0
-);
+              0,                 '',		    '',			'',
+              '',                '',	    	    '',			$settings_dbh
 
+);
 print_page_bottom_bootstrap;
 $top_hits->finish();
 exit;

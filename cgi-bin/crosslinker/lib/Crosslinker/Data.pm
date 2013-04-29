@@ -17,7 +17,7 @@ our @EXPORT = (
                'generate_decoy',   'set_doublets_found',  'import_mgf_doublet_query', 'connect_db_single',
                'import_scan',      'create_settings',     'set_failed',               'connect_db_results',
                'set_state',        'create_results',      'import_mzXML',             'create_peptide_table',
-               'add_peptide'
+               'add_peptide',	   'connect_settings'
 );
 ######
 #
@@ -143,6 +143,25 @@ sub connect_db {
     return ($dbh, $settings_dbh);
 }
 
+
+sub connect_settings {
+
+    my $settings_dbh;
+
+    if (sql_type eq 'mysql') {
+      $settings_dbh = DBI->connect("dbi:mysql:", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+      $settings_dbh->do("create database if not exists settings");
+      $settings_dbh->disconnect;
+      $settings_dbh = DBI->connect("dbi:mysql:settings", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+    }
+    else {
+      $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+    }
+    
+    return ($settings_dbh);
+}
+
+
 sub connect_db_results {
     my ($name, $autocommit) = @_;
 
@@ -158,31 +177,41 @@ sub create_settings {
 
     my ($settings_dbh) = @_;
 
+
+    my $row_id_type;
+
+   if (sql_type eq 'mysql') 
+	{
+	$row_id_type = "INTEGER NOT NULL AUTO_INCREMENT, PRIMARY KEY (name)";
+   } else { 
+	$row_id_type = "INTEGER PRIMARY KEY";
+   }
+
     _retry 15, sub {
         $settings_dbh->do(
             "CREATE TABLE IF NOT EXISTS settings (
-						      name INTEGER PRIMARY KEY,
-						      desc,
-						      cut_residues,
-						      protein_sequences,
-						      reactive_site,
-						      mono_mass_diff,
-						      xlinker_mass,
-						      decoy,
-						      ms2_da,
-						      ms1_ppm,
+						      name " . $row_id_type . " ,
+						      description TEXT,
+						      cut_residues TEXT,
+						      protein_sequences TEXT,
+						      reactive_site TEXT,
+						      mono_mass_diff TEXT,
+						      xlinker_mass TEXT,
+						      decoy NUMERIC,
+						      ms2_da TEXT,
+						      ms1_ppm TEXT,
 						      finished NUMERIC,
-						      isotoptic_shift,
-						      threshold,
-						      doublets_found,
-						      charge_match,
-						      intensity_match,
-						      scored_ions,
-						      amber,
-						      time,
-						      non_specific_digest,
-						      no_enzyme_min,
-						      no_enzyme_max
+						      isotoptic_shift TEXT,
+						      threshold TEXT,
+						      doublets_found TEXT,
+						      charge_match NUMERIC,
+						      intensity_match NUMERIC,
+						      scored_ions TEXT,
+						      amber TEXT,
+						      time TEXT,
+						      non_specific_digest NUMERIC,
+						      no_enzyme_min TEXT,
+						      no_enzyme_max TEXT
 						) "
         );
     };
@@ -348,7 +377,7 @@ sub save_settings {
     my $settings_sql = $settings_dbh->prepare(
         "INSERT INTO settings 
 						(
-						      desc,
+						      description,
 						      cut_residues,
 						      protein_sequences,
 						      reactive_site,
@@ -386,19 +415,24 @@ sub save_settings {
         );
     };
 
-    my $results_table = $settings_dbh->func('last_insert_rowid');
-
+    my $results_table;
+    if (sql_type eq 'mysql') { 
+      $results_table = $settings_dbh->{'mysql_insertid'};
+    } else {
+      $results_table = $settings_dbh->func('last_insert_rowid');
+    }
+    
     if (defined $fixed_mods_ref) {
         my $conf_dbh = connect_conf_db;
         _retry 15, sub {
             $settings_dbh->do(
                 "CREATE TABLE IF NOT EXISTS modifications (
-						      run_id,
-						      mod_id,
-						      mod_name,
-						      mod_mass,
-						      mod_residue,
-						      mod_type
+						      run_id TEXT,
+						      mod_id TEXT,
+						      mod_name TEXT,
+						      mod_mass TEXT,
+						      mod_residue TEXT,
+						      mod_type TEXT
 						) "
             );
         };
@@ -433,12 +467,12 @@ sub save_settings {
         _retry 15, sub {
             $settings_dbh->do(
                 "CREATE TABLE IF NOT EXISTS modifications (
-						      run_id,
-						      mod_id,
-						      mod_name,
-						      mod_mass,
-						      mod_residue,
-						      mod_type
+						      run_id TEXT,
+						      mod_id TEXT,
+						      mod_name TEXT,
+						      mod_mass TEXT,
+						      mod_residue TEXT,
+						      mod_type TEXT
 						) "
             );
         };

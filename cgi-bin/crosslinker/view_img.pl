@@ -15,6 +15,7 @@ use lib 'lib';
 use Crosslinker::HTML;
 use Crosslinker::Links;
 use Crosslinker::Scoring;
+use Crosslinker::Data;
 use File::Temp qw/ tempfile tempdir /;
 use Crosslinker::Constants;
 
@@ -44,7 +45,8 @@ if ($scan == -1) {
     $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings_single", "", "", { RaiseError => 1, AutoCommit => 1 });
 } else {
 
-    $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+    $settings_dbh = connect_settings;
+
 
     my $settings_sql = $settings_dbh->prepare("SELECT name FROM settings WHERE name = ?");
     $settings_sql->execute($table);

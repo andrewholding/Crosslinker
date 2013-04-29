@@ -16,6 +16,8 @@ use Crosslinker::HTML;
 use Crosslinker::Results;
 use Crosslinker::Constants;
 use Crosslinker::Config;
+use Crosslinker::Data;
+use Crosslinker::UserSettings;
 
 ########################
 #                      #
@@ -44,9 +46,10 @@ if (defined $query->param('more')) {
 #                      #
 ########################
 
-my $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+my $settings_dbh = connect_settings;
 
 my $settings_sql = $settings_dbh->prepare("SELECT name FROM settings WHERE name = ?");
+
 $settings_sql->execute($table);
 my @data = $settings_sql->fetchrow_array();
 if ($data[0] != $table) {
@@ -74,7 +77,7 @@ my (
 
 
 $settings->finish();
-$settings_dbh->disconnect();
+
 
 if (defined $query->param('decoy')) { $decoy = $query->param('decoy') }
 
@@ -122,7 +125,7 @@ else                                      { $decoy = "No" }
 
 print "<Table class='table table-striped'>
 <tr><td style='font-weight: bold;'>Name:</td><td>$name</td><td style='font-weight: bold;'>Description</td><td>$desc</td></tr>";
-if ($non_specific_digest == 'O') { print "<tr><td style='font-weight: bold;'>Cut:</td><td>$cut_residues</td>";} 
+if ($non_specific_digest == '0') { print "<tr><td style='font-weight: bold;'>Cut:</td><td>$cut_residues</td>";} 
 elsif ($non_specific_digest == '1') { print "<tr><td style='font-weight: bold;'>Cut:</td><td>No Enzyme</td>";}
 elsif ($non_specific_digest == '2') { print "<tr><td style='font-weight: bold;'>Cut:</td><td>Amino Peptidase/Trypsin</td>";}
 
@@ -139,7 +142,7 @@ my $varible_mod_string = '';
 print "<h4>Dynamic Modifications</h4>";
 print "<table class='table table-striped'>";
 print "<tr><td>ID</td><td>Name</td><td>Mass</td><td>Residue</td></tr>";
-my $dynamic_mods = get_mods($table, 'dynamic');
+my $dynamic_mods = get_mods($table, 'dynamic', $settings_dbh);
 while ((my $dynamic_mod = $dynamic_mods->fetchrow_hashref)) {
     print
 "<tr><td>$dynamic_mod->{'mod_id'}</td><td>$dynamic_mod->{'mod_name'}</td><td>$dynamic_mod->{'mod_mass'}</td><td>$dynamic_mod->{'mod_residue'}</td></tr>";
@@ -151,7 +154,7 @@ my $static_mod_string = '';
 print "<h4>Fixed Modifications</h4>";
 print "<table class='table table-striped'>";
 print "<tr><td>ID</td><td>Name</td><td>Mass</td><td>Residue</td></tr>";
-my $fixed_mods = get_mods($table, 'fixed');
+my $fixed_mods = get_mods($table, 'fixed',  $settings_dbh);
 while ((my $fixed_mod = $fixed_mods->fetchrow_hashref)) {
     print
 "<tr><td>$fixed_mod->{'mod_id'}</td><td>$fixed_mod->{'mod_name'}</td><td>$fixed_mod->{'mod_mass'}</td><td>$fixed_mod->{'mod_residue'}</td></tr>";
@@ -174,13 +177,15 @@ if (defined $order) {
       ;    # min (best_alpha,best_beta)
 }
 $top_hits->execute($table);
+
+
 print_results(
               $top_hits,         $mass_of_hydrogen, $mass_of_deuterium, $mass_of_carbon12,
               $mass_of_carbon13, $cut_residues,     $protein_sequences, $reactive_site,
               $results_dbh,      $xlinker_mass,     $mono_mass_diff,    $table,
               $mass_seperation,  0,                 0,                  0,
               50 * $short,       0,                 $static_mod_string, $varible_mod_string,
-              2,                 $decoy
+              2,                 $decoy,	    0,			$settings_dbh
 );
 
 if ($short == 1) {
@@ -202,7 +207,7 @@ print_results(
               $results_dbh,      $xlinker_mass,     $mono_mass_diff,    $table,
               $mass_seperation,  0,                 0,                  0,
               50 * $short,       1,                 $static_mod_string, $varible_mod_string,
-              1,                 $decoy
+              1,                 $decoy,	    0,			$settings_dbh
 );
 
 print_page_bottom_bootstrap;

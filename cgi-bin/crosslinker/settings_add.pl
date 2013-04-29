@@ -16,6 +16,7 @@ use Crosslinker::HTML;
 use Crosslinker::Constants;
 use Crosslinker::Data;
 use Crosslinker::Config;
+use Crosslinker::UserSettings;
 
 ########################
 #                      #

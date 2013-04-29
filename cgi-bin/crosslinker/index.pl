@@ -315,8 +315,5 @@ function clearFileInputField(tagId) {
 </div> 
  
 ENDHTML
-
-$dbh->disconnect();
-
 print_page_bottom_bootstrap;
 exit;

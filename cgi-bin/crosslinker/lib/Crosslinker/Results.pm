@@ -138,7 +138,7 @@ sub print_results_text {
     my (
         $top_hits,       $mass_of_hydrogen,  $mass_of_deuterium, $mass_of_carbon12, $mass_of_carbon13,
         $cut_residues,   $protien_sequences, $reactive_site,     $dbh,              $xlinker_mass,
-        $mono_mass_diff, $table,             $repeats,           $xlink_mono_or_all
+        $mono_mass_diff, $table,             $repeats,           $xlink_mono_or_all, $settings_dbh
     ) = @_;
 
     my $fasta = $protien_sequences;
@@ -333,7 +333,7 @@ sub print_results_text {
 
                 # 		warn "Scan = $top_hits_results->{'scan'} ";
                 my %modifications =
-                  modifications($mono_mass_diff, $xlinker_mass, $reactive_site, $top_hits_results->{'name'});
+                  modifications($mono_mass_diff, $xlinker_mass, $reactive_site, $top_hits_results->{'name'}, $settings_dbh);
                 print $modifications{ $top_hits_results->{'modification'} }{Name};
                 print $finish_division;
 
@@ -405,7 +405,7 @@ sub print_results_text {
                 print $new_division, $top_hits_results->{'monolink_mass'}, $finish_division;
 
                 my %modifications =
-                  modifications($mono_mass_diff, $xlinker_mass, $reactive_site, $top_hits_results->{'name'});
+                  modifications($mono_mass_diff, $xlinker_mass, $reactive_site, $top_hits_results->{'name'}, $settings_dbh);
                 if ($top_hits_results->{'no_of_mods'} > 1) {
                     print "$top_hits_results->{'no_of_mods'} x ";
 
@@ -489,7 +489,7 @@ sub print_results_paginated {
 
     # warn $decoy;
 
-    my %modifications = modifications($mono_mass_diff, $xlinker_mass, $reactive_site, $table, $settings_dbh);
+     my %modifications  = modifications($mono_mass_diff, $xlinker_mass, $reactive_site, $table, $settings_dbh);
 
     my $fasta = $protien_sequences;
     $protien_sequences =~ s/^>.*$/>/mg;
@@ -646,7 +646,9 @@ sub print_results {
 
     # warn $decoy;
 
-    my %modifications = modifications($mono_mass_diff, $xlinker_mass, $reactive_site, $table, $settings_dbh);
+#    warn $settings_dbh;
+
+    my %modifications  = modifications($mono_mass_diff, $xlinker_mass, $reactive_site, $table, $settings_dbh);
 
     my $fasta = $protien_sequences;
     $protien_sequences =~ s/^>.*$/>/mg;
@@ -849,7 +851,7 @@ sub print_results {
 
             print "</td>";
 
-            $fdr = sprintf("%.2f", $top_hits_results->{'FDR'} * 100);
+            if (defined $top_hits_results->{'FDR'}) { $fdr = sprintf("%.2f", $top_hits_results->{'FDR'} * 100)} else { $fdr = '0'};
             if ($decoy eq 'Yes') { print "<td>$fdr%</td>" }
             print "</tr>";
         } else {
@@ -922,7 +924,7 @@ sub print_results_combined {
                 print "<tr><td>", $printed_hits + 1,"</td><td>";
 		if ($show_scan_image != 1) { print "<a href='view_scan.pl?table=$top_hits_results->{'name'}&scan=$top_hits_results->{'scan'}&fraction=$top_hits_results->{'fraction'}'>";}
 		print "$top_hits_results->{'score'}";
-		if ($show_scan_image != 1) {"</a>"};
+		if ($show_scan_image != 1) {print "</a>"};
 		print "</td><td>$top_hits_results->{'mz'}</td><td>$top_hits_results->{'charge'}+</td><td>$rounded</td>";
                 my @fragments = split('-', $top_hits_results->{'fragment'});
                 my @unmodified_fragments =
@@ -1035,10 +1037,10 @@ sub print_report {
     my (
         $top_hits,       $mass_of_hydrogen,  $mass_of_deuterium, $mass_of_carbon12, $mass_of_carbon13,
         $cut_residues,   $protien_sequences, $reactive_site,     $dbh,              $xlinker_mass,
-        $mono_mass_diff, $table,             $repeats,		 $proteinase_k
+        $mono_mass_diff, $table,             $repeats,		 $proteinase_k,	    $settings_dbh
     ) = @_;
 
-    my %modifications = modifications($mono_mass_diff, $xlinker_mass, $reactive_site, $table);
+    my %modifications = modifications($mono_mass_diff, $xlinker_mass, $reactive_site, $table, $settings_dbh);
 
     my $fasta = $protien_sequences;
     $protien_sequences =~ s/^>.*$/>/mg;

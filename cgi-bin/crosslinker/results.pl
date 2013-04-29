@@ -8,12 +8,17 @@ use DBI;
 use lib 'lib';
 use Crosslinker::HTML;
 use Crosslinker::Data;
+use Crosslinker::UserSettings;
 
-my $dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+
+my ($dbh_memory, $dbh) = connect_db;
+# my $dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+
+$dbh_memory->disconnect;
 
 create_settings($dbh);
 
-my $table_list = $dbh->prepare("SELECT name, desc, finished FROM settings  ORDER BY length(name) DESC, name DESC ");
+my $table_list = $dbh->prepare("SELECT name, description, finished FROM settings  ORDER BY length(name) DESC, name DESC ");
 $table_list->execute();
 
 
@@ -46,7 +51,7 @@ while (my $table_name = $table_list->fetchrow_hashref) {
 
     print '<tr><td><input type="checkbox" name="' . $table_name->{'name'} . '" value="true"></input></td><td>',
       $table_name->{'name'},
-      '</td><td><a href="rename.pl?table=' . $table_name->{'name'} . '">' . $table_name->{'desc'} . "</td><td>";
+      '</td><td><a href="rename.pl?table=' . $table_name->{'name'} . '">' . $table_name->{'description'} . "</td><td>";
 
 #     if ($table_name->{'finished'} != -1 && $table_name->{'finished'} != -4 && $table_name->{'finished'} != -5) {
 #         print '<iframe style="border: 0px; width:8em; height:1.29em; overflow-y: hidden;" src="status-iframe.pl?table=',

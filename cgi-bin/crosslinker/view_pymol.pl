@@ -16,6 +16,8 @@ use Crosslinker::HTML;
 use Crosslinker::Results;
 use Crosslinker::Constants;
 use Crosslinker::Config;
+use Crosslinker::UserSettings;
+use Crosslinker::Data;
 
 ########################
 #                      #
@@ -38,8 +40,7 @@ if (defined $query->param('order')) {
 #                      #
 ########################
 
-my $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
-
+my $settings_dbh = connect_settings;
 my $settings_sql = $settings_dbh->prepare("SELECT name FROM settings WHERE name = ?");
 $settings_sql->execute($table);
 my @data = $settings_sql->fetchrow_array();
@@ -115,16 +116,31 @@ while ((my $sequences_results = $sequences->fetchrow_hashref)) {
         $error{$name}{ substr($sequences_results->{'seq'}, 1) } = $query->param(substr($sequences_results->{'seq'}, 1));
         $settings_dbh->do(
             "CREATE TABLE IF NOT EXISTS pymol_settings (
-								experiment,
-								setting,
-								value
+								experiment  NUMERIC,
+								setting  TEXT,
+								value  TEXT
 								)"
         );
-        $settings_dbh->do("CREATE UNIQUE INDEX IF NOT EXISTS pymol_index ON  pymol_settings (experiment, setting)");
 
-        my $settings_sql = $settings_dbh->prepare("
+	if (sql_type eq 'mysql') {
+        $settings_dbh->do("alter table  pymol_settings add unique index (experiment, setting)");	  
+	} else {
+        $settings_dbh->do("CREATE UNIQUE INDEX IF NOT EXISTS pymol_index ON  pymol_settings (experiment, setting)");
+	 }
+
+	my  $settings_sql;
+	if (sql_type eq 'mysql') {
+               $settings_sql = $settings_dbh->prepare("
+					REPLACE INTO pymol_settings (experiment, setting, value)
+					VALUES (?,?,?)");
+  
+	} else {
+               $settings_sql = $settings_dbh->prepare("
 					INSERT OR REPLACE INTO pymol_settings (experiment, setting, value)
 					VALUES (?,?,?)");
+;
+	 }
+
 
         $settings_sql->execute($name,
                                substr($sequences_results->{'seq'}, 1),
@@ -135,12 +151,16 @@ while ((my $sequences_results = $sequences->fetchrow_hashref)) {
         $error{$name}{ substr($sequences_results->{'seq'}, 1) } = $query->param(substr($sequences_results->{'seq'}, 1));
         $settings_dbh->do(
             "CREATE TABLE IF NOT EXISTS pymol_settings (
-								experiment,
-								setting,
-								value
+								experiment  NUMERIC,
+								setting  VARCHAR(255),
+								value  TEXT
 								)"
         );
+	if (sql_type eq 'mysql') {
+        $settings_dbh->do("alter table  pymol_settings add unique index (experiment, setting)");	  
+	} else {
         $settings_dbh->do("CREATE UNIQUE INDEX IF NOT EXISTS pymol_index ON  pymol_settings (experiment, setting)");
+	 }
 
         my $settings_sql = $settings_dbh->prepare("SELECT value FROM pymol_settings WHERE experiment=? AND setting=?");
         $settings_sql->execute($name, substr($sequences_results->{'seq'}, 1));
@@ -160,16 +180,30 @@ while ((my $sequences_results = $sequences->fetchrow_hashref)) {
           $query->param(substr($sequences_results->{'seq'}, 1) . "_name");
         $settings_dbh->do(
             "CREATE TABLE IF NOT EXISTS pymol_settings (
-								experiment,
-								setting,
-								value
+								experiment  NUMERIC,
+								setting  TEXT,
+								value  TEXT
 								)"
         );
+	if (sql_type eq 'mysql') {
+        $settings_dbh->do("alter table  pymol_settings add unique index (experiment, setting)");	  
+	} else {
         $settings_dbh->do("CREATE UNIQUE INDEX IF NOT EXISTS pymol_index ON  pymol_settings (experiment, setting)");
+	 }
 
-        my $settings_sql = $settings_dbh->prepare("
+	my  $settings_sql;
+	if (sql_type eq 'mysql') {
+               $settings_sql = $settings_dbh->prepare("
+					REPLACE INTO pymol_settings (experiment, setting, value)
+					VALUES (?,?,?)");
+  
+	} else {
+               $settings_sql = $settings_dbh->prepare("
 					INSERT OR REPLACE INTO pymol_settings (experiment, setting, value)
 					VALUES (?,?,?)");
+;
+	 }
+
 
         $settings_sql->execute($name,
                                substr($sequences_results->{'seq'}, 1) . "_name",

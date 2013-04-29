@@ -871,6 +871,7 @@ Content-type: text/html\n\n
             <ul class="nav"> 
 ENDHTML
 
+if (!defined $page) {$page = ''};
 
 print '              <li '; if ($page eq 'Home') {print 'class="active"' }; print '><a href="index.pl">Search</a></li>'; 
 print '              <li '; if ($page eq 'Results') {print 'class="active"' }; print '><a href="results.pl">Results</a></li>'; 

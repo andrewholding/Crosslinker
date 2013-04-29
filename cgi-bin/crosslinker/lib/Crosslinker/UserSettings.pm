@@ -21,9 +21,8 @@ sub installed {
 
 sub sql_type {
 
-warn 'sqlite';
 
-return 'sqlite';
+return 'sqlite'; #mysql or sqlite
 }
 
 1;
