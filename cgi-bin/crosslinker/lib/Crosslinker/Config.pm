@@ -1,9 +1,16 @@
 use strict;
+use warnings;
 
 package Crosslinker::Config;
-use base 'Exporter';
 
+use lib 'lib';
+use Crosslinker::UserSettings;
+
+use base 'Exporter';
 our @EXPORT = ('get_mods', 'get_conf_value', 'connect_conf_db', 'add_conf', 'get_conf', 'delete_conf', 'update_conf');
+
+
+
 ######
 #
 # Config import functions
@@ -37,7 +44,7 @@ sub _retry {
 sub get_conf {
     my ($dbh, $setting) = @_;
 
-    my $sql = $dbh->prepare("SELECT rowid, * FROM setting WHERE type = ? ORDER BY name ASC");
+    my $sql = $dbh->prepare("SELECT  rowid, * FROM setting WHERE type = ? ORDER BY name ASC");
     _retry 15, sub { $sql->execute($setting) };
     return $sql;
 
@@ -55,10 +62,18 @@ sub get_conf_value {
 sub get_mods {
 
     my ($table, $mod_type, $dbh) = @_;
+
     if (!defined $dbh) {
-        $dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+      if (sql_type eq 'mysql') {
+	$dbh = DBI->connect("dbi:mysql:", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+	$dbh->do("create database if not exists config");
+	$dbh->disconnect;
+	$dbh = DBI->connect("dbi:mysql:config", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+      } else {
+      $dbh = DBI->connect("dbi:SQLite:dbname=db/config", "", "", { RaiseError => 1, AutoCommit => 1 });
+      }
     }
-    my $sql = $dbh->prepare("SELECT * FROM modifications WHERE run_id = ? AND mod_type = ?");
+    my $sql = $dbh->prepare("SELECT name, rowid FROM modifications WHERE run_id = ? AND mod_type = ?");
     _retry 15, sub { $sql->execute($table, $mod_type) };
     return $sql;
 
@@ -74,19 +89,28 @@ sub delete_conf {
 }
 
 sub connect_conf_db {
-    my $dbh = DBI->connect("dbi:SQLite:dbname=db/config", "", "", { RaiseError => 1, AutoCommit => 1 });
 
+    my $dbh;
+
+    if (sql_type eq 'mysql') {
+      $dbh = DBI->connect("dbi:mysql:", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+      $dbh->do("create database if not exists config");
+      $dbh->disconnect;
+      $dbh = DBI->connect("dbi:mysql:config", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+    } else {
+    $dbh = DBI->connect("dbi:SQLite:dbname=db/config", "", "", { RaiseError => 1, AutoCommit => 1 });
+    }
     _retry 15, sub {
         $dbh->do(
             "CREATE TABLE IF NOT EXISTS setting (
-						      type,
-						      id,
-						      name,
-						      setting1,
-						      setting2,
-						      setting3,
-						      setting4,
-						      setting5
+						      type TEXT,
+						      id INT,
+						      name TEXT,
+						      setting1 TEXT,
+						      setting2 TEXT,
+						      setting3 TEXT,
+						      setting4 TEXT,
+						      setting5 TEXT
 						      ) "
         );
     };

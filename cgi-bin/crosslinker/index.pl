@@ -16,6 +16,7 @@ use Crosslinker::HTML;
 use Crosslinker::Constants;
 use Crosslinker::Data;
 use Crosslinker::Config;
+use Crosslinker::UserSettings;
 
 my $path = installed();
 
@@ -110,6 +111,7 @@ if ( $development_setting->{'setting1'} == 1) {
 
 </div><br/>';
 
+$development->finish;
 print'
 <div class="row">
 <div class="span4">

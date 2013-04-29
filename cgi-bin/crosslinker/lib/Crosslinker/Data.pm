@@ -5,6 +5,8 @@ use base 'Exporter';
 use lib 'lib';
 use Crosslinker::Scoring;
 use Crosslinker::Config;
+use Crosslinker::Constants;
+use Crosslinker::UserSettings;
 use MIME::Base64;
 
 our @EXPORT = (
@@ -120,10 +122,23 @@ sub create_results {
 }
 
 sub connect_db {
-    my $dbh = DBI->connect("dbi:SQLite:dbname=:memory:", "", "", { RaiseError => 1, AutoCommit => 1 });
 
-  #    my $results_dbh  = DBI->connect( "dbi:SQLite:dbname=db/results",  "", "", { RaiseError => 1, AutoCommit => 1 } );
-    my $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+
+    my $dbh;
+    my $settings_dbh;
+
+    if (sql_type eq 'mysql') {
+      $dbh = DBI->connect("dbi:SQLite:dbname=:memory:", "", "", { RaiseError => 1, AutoCommit => 1 });
+      $settings_dbh = DBI->connect("dbi:mysql:", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+      $settings_dbh->do("create database if not exists settings");
+      $settings_dbh->disconnect;
+      $settings_dbh = DBI->connect("dbi:mysql:settings", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+    }
+    else {
+      $dbh = DBI->connect("dbi:SQLite:dbname=:memory:", "", "", { RaiseError => 1, AutoCommit => 1 });
+      $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+    }
+    
 
     return ($dbh, $settings_dbh);
 }

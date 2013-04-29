@@ -1,12 +1,7 @@
 use strict;
 
 package Crosslinker::HTML;
-use lib 'lib';
-use Crosslinker::Links;
-use Crosslinker::Data;
-use Crosslinker::Proteins;
-use Crosslinker::Scoring;
-use Crosslinker::Constants;
+
 use base 'Exporter';
 our @EXPORT = (
                'generate_page',           'print_heading',
@@ -17,6 +12,15 @@ our @EXPORT = (
                'generate_page_single_scan', 'print_page_top_bootstrap',
                'print_page_bottom_bootstrap',
 );
+
+use lib 'lib';
+use Crosslinker::Links;
+use Crosslinker::Data;
+use Crosslinker::Proteins;
+use Crosslinker::Scoring;
+use Crosslinker::Constants;
+use Crosslinker::UserSettings;
+
 ######
 #
 # Creates html for pages

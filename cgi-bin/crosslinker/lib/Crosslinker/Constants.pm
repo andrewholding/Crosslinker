@@ -2,10 +2,10 @@ use strict;
 
 package Crosslinker::Constants;
 use base 'Exporter';
+our @EXPORT = ('residue_mass', 'protein_residuemass', 'constants');
+
 use lib 'lib';
 use Crosslinker::Config;
-
-our @EXPORT = ('residue_mass', 'protein_residuemass', 'constants', 'version', 'installed');
 
 ######
 #
@@ -86,13 +86,6 @@ sub constants {
     );
 }
 
-sub version {
-    return '0.9.3';
-}
-
-sub installed {
-    return 'crosslinker';
-}
 
 1;
 
