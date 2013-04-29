@@ -19,6 +19,7 @@ use Crosslinker::Data;
 use Crosslinker::Proteins;
 use Crosslinker::Scoring;
 use Crosslinker::Config;
+use Crosslinker::UserSettings;
 
 # Constants
 my (

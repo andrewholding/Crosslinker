@@ -26,6 +26,7 @@ use Crosslinker::Proteins;
 use Crosslinker::Scoring;
 use Crosslinker::Config;
 use Crosslinker::Results;
+use Crosslinker::UserSettings;
 
 print_page_top_bootstrap("Score");
 print '<div class="row">

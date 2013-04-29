@@ -16,6 +16,7 @@ use Crosslinker::Constants;
 use Crosslinker::Proteins;
 use Crosslinker::Scoring;
 use Crosslinker::HTML;
+use Crosslinker::UserSettings;
 
 #loads database modules
 

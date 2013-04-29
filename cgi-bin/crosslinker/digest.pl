@@ -5,6 +5,7 @@ use CGI::Carp qw ( fatalsToBrowser );
 use POSIX 'setsid';
 use lib 'lib';
 use Crosslinker::Constants;
+use Crosslinker::UserSettings;
 
 # Import CGI Varibles
 my $query = new CGI;
