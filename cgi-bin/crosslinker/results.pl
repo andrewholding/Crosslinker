@@ -49,9 +49,12 @@ while (my $table_name = $table_list->fetchrow_hashref) {
         $state =  '<span class="label">' . $table_name->{'finished'} * 100 . "%</span>";
     }
 
-    print '<tr><td><input type="checkbox" name="' . $table_name->{'name'} . '" value="true"></input></td><td>',
-      $table_name->{'name'},
-      '</td><td><a href="rename.pl?table=' . $table_name->{'name'} . '">' . $table_name->{'description'} . "</td><td>";
+print '<tr><td>';
+
+ if (sql_type ne 'mysql' )   { print '<input type="checkbox" name="' . $table_name->{'name'} . '" value="true"></input>'; }
+
+
+print ' </td><td>',  $table_name->{'name'}, '</td><td><a href="rename.pl?table=' . $table_name->{'name'} . '">' . $table_name->{'description'} . "</td><td>";
 
 #     if ($table_name->{'finished'} != -1 && $table_name->{'finished'} != -4 && $table_name->{'finished'} != -5) {
 #         print '<iframe style="border: 0px; width:8em; height:1.29em; overflow-y: hidden;" src="status-iframe.pl?table=',
@@ -68,7 +71,10 @@ while (my $table_name = $table_list->fetchrow_hashref) {
 print "</table>";
 
 print
-'<div style="width: 20em; margin: auto; padding:1em;"> <input class="btn btn-primary" type="submit" value="Combine">&nbsp<a class="btn" href="view_log.pl">View Log</a>';
+'<div style="width: 20em; margin: auto; padding:1em;">';
+
+ if (sql_type ne 'mysql' )   { print '<input class="btn btn-primary" type="submit" value="Combine">&nbsp';}
+print '<a class="btn" href="view_log.pl">View Log</a>';
 print '&nbsp<a class="btn" href="clear_log.pl">Clear Log</a></form></div>';
 print_page_bottom_bootstrap;
 $dbh->disconnect();
