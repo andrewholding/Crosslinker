@@ -76,46 +76,50 @@ sub create_results {
 
     my ($results_dbh) = @_;
 
+my $row_id_type;
+if (sql_type eq 'mysql') { $row_id_type = "rowid INTEGER NOT NULL AUTO_INCREMENT, PRIMARY KEY (rowid),"};
+
     _retry 15, sub {
         $results_dbh->do(
             "CREATE TABLE IF NOT EXISTS results (
-						      name,
-						      MSn_string,
-						      d2_MSn_string,
-						      mz,
-						      charge,
-						      fragment,    
-						      sequence1,
-						      sequence2,
-						      sequence1_name,
-						      sequence2_name,
-						      score REAL,
-						      fraction,
-						      scan,
-						      d2_scan,
-						      modification,
-						      no_of_mods,
-						      best_x,
-						      best_y,
-						      unmodified_fragment,
-						      ppm,
-						      top_10,
-						      d2_top_10,
-						      matched_abundance,
-						      d2_matched_abundance,
-						      total_abundance,
-						      d2_total_abundance,
-						      matched_common,
-     						      matched_crosslink,
-						      d2_matched_common,
-						      d2_matched_crosslink,
-						      monolink_mass,
-						      best_alpha REAL,
-						      best_beta REAL,
-						      min_chain_score,
-						      time,
-						      precursor_scan,
-						      FDR) "
+						      $row_id_type	
+						      name 		TEXT,
+						      MSn_string	TEXT,
+						      d2_MSn_string	TEXT,
+						      mz		DOUBLE,
+						      charge		NUMERIC,
+						      fragment		TEXT,    
+						      sequence1		TEXT,
+						      sequence2		TEXT,
+						      sequence1_name	TEXT,
+						      sequence2_name	TEXT,
+						      score 		REAL,
+						      fraction		NUMERIC,
+						      scan		NUMERIC,
+						      d2_scan		NUMERIC,
+						      modification	TEXT,
+						      no_of_mods	TEXT,
+						      best_x		INTEGER,
+						      best_y		INTEGER,
+						      unmodified_fragment	TEXT,
+						      ppm			FLOAT,
+						      top_10			TEXT,
+						      d2_top_10			TEXT,
+						      matched_abundance		TEXT,
+						      d2_matched_abundance	TEXT,
+						      total_abundance		TEXT,
+						      d2_total_abundance	TEXT,
+						      matched_common		TEXT,
+     						      matched_crosslink		TEXT,
+						      d2_matched_common		TEXT,
+						      d2_matched_crosslink	TEXT,
+						      monolink_mass		DOUBLE,
+						      best_alpha 		REAL,
+						      best_beta 		REAL,
+						      min_chain_score		TEXT,
+						      time			TEXT,
+						      precursor_scan		TEXT,
+						      FDR			TEXT) "
         );
     };
 
@@ -166,8 +170,18 @@ sub connect_db_results {
     my ($name, $autocommit) = @_;
 
     if (!defined $autocommit) { $autocommit = 1 }
-    my $results_dbh =
-      DBI->connect("dbi:SQLite:dbname=db/results-$name", "", "", { RaiseError => 1, AutoCommit => $autocommit });
+    my $results_dbh;
+
+  if (sql_type eq 'mysql') {
+      $results_dbh = DBI->connect("dbi:mysql:", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+      $results_dbh->do("create database if not exists results$name");
+      $results_dbh->disconnect;
+      $results_dbh = DBI->connect("dbi:mysql:results$name", "root", "crosslinker", { RaiseError => 1, AutoCommit => $autocommit });
+    }
+    else {
+      $results_dbh = DBI->connect("dbi:SQLite:dbname=db/results-$name", "", "", { RaiseError => 1, AutoCommit => $autocommit });
+    }
+
     create_results($results_dbh);
 
     return ($results_dbh);
@@ -199,8 +213,8 @@ sub create_settings {
 						      xlinker_mass TEXT,
 						      decoy NUMERIC,
 						      ms2_da TEXT,
-						      ms1_ppm TEXT,
-						      finished NUMERIC,
+						      ms1_ppm FLOAT,
+						      finished FLOAT,
 						      isotoptic_shift TEXT,
 						      threshold TEXT,
 						      doublets_found TEXT,
@@ -430,7 +444,7 @@ sub save_settings {
 						      run_id TEXT,
 						      mod_id TEXT,
 						      mod_name TEXT,
-						      mod_mass TEXT,
+						      mod_mass DOUBLE,
 						      mod_residue TEXT,
 						      mod_type TEXT
 						) "
@@ -943,7 +957,7 @@ sub matchpeaks {
                                                  )
                                              )
                                 ) / ($mass) * 1000000;
-
+# 				warn "Score: $score, $peak->{monoisotopic_mw} - $mass, $fragment";
 # 	   	        my $d2_score = (abs(($peak->{d2_monoisotopic_mw} - ($fragment_masses{$fragment}+$seperation+($modifications{$modification}{Delta}*$n)))))/($fragment_masses{$fragment})*1000000;
                                 my $rounded = sprintf("%.3f", $score);
                                 {
@@ -984,6 +998,8 @@ sub matchpeaks {
                                     if ($fragment !~ m/[-]/) {
                                         $fragment2_source = "0";
                                     }
+
+
 
 				    if ($amber_codon == 0) {
                                     _retry 15, sub {
@@ -1256,7 +1272,7 @@ sub matchpeaks_single {
 # 	   	        my $d2_score = (abs(($peak->{d2_monoisotopic_mw} - ($fragment_masses{$fragment}+$seperation+($modifications{$modification}{Delta}*$n)))))/($fragment_masses{$fragment})*1000000;
                                 my $rounded = sprintf("%.3f", $score);
                                 {
-
+					
  #                                                            warn $fragment, $modifications{$modification}{Name}, "\n";
  # 				if ( $modifications{$modification}{Name} eq "loop link" ) { warn "loop link ";	}
                                     my $abundance_ratio = -1;
@@ -1338,7 +1354,17 @@ sub create_table    #Creates the working table in the SQLite database
     _retry 15, sub { $masslist->execute() };
     _retry 15, sub {
         $dbh->do(
-"CREATE TABLE msdata (scan_num number,fraction, title, charge number, mz number, monoisotopic_mw number, abundance number, MSn_string, msorder number, precursor_scan) "
+	"CREATE TABLE msdata (
+		scan_num 	NUMERIC,
+		fraction 	NUMERIC, 
+		title	 	TEXT, 
+		charge 		NUMERIC,
+		mz		DOUBLE,
+		monoisotopic_mw DOUBLE,
+		abundance 	FLOAT,
+		MSn_string	TEXT,
+		msorder 	NUMERIC,
+		precursor_scan	NUMERIC) "
         );
     };
 
@@ -1351,18 +1377,24 @@ sub create_peptide_table {
 
     my ($dbh) = @_;
 
+my $row_id_type ;
+
+if (sql_type eq 'mysql') { $row_id_type = "rowid INTEGER NOT NULL AUTO_INCREMENT, PRIMARY KEY (rowid),"};
+
+  
     _retry 15, sub {
         $dbh->do(
             "CREATE TABLE IF NOT EXISTS peptides ( 
-					    results_table number,
-					    sequence,
-					    source,
-					    linear_only number,
-					    mass float,
-					    modifications,
-					    monolink number,
-					    xlink number,
-					    no_of_mods number) "
+					     $row_id_type	
+					    results_table NUMERIC,
+					    sequence	  TEXT,
+					    source	  TEXT,
+					    linear_only   NUMERIC,
+					    mass 	  DOUBLE,
+					    modifications TEXT,
+					    monolink 	  NUMERIC,
+					    xlink 	  NUMERIC,
+					    no_of_mods 	  NUMERIC) "
         );
     };
 
@@ -1586,10 +1618,16 @@ sub loaddoubletlist_db    #Used to get mass-doublets from the data.
     my $isopairs;
     my @peaklist;
 
-    my $masslist = $dbh->prepare("DROP INDEX IF EXISTS mz_data;");
-    _retry 15, sub { $masslist->execute() };
-    $masslist = $dbh->prepare("CREATE INDEX mz_data ON msdata ( monoisotopic_mw);");
-    _retry 15, sub { $masslist->execute() };
+    my  $masslist;
+
+	if (sql_type eq 'mysql') {
+	    $masslist = $dbh->do("alter table  msdata add index (monoisotopic_mw)");	  
+	} else {
+	    $masslist = $dbh->prepare("DROP INDEX IF EXISTS mz_data;");
+	    _retry 15, sub { $masslist->execute() };
+	    $masslist = $dbh->prepare("CREATE INDEX mz_data ON msdata ( monoisotopic_mw);");
+	    _retry 15, sub { $masslist->execute() };
+	 }
 
     #    $masslist = $dbh->prepare(
     #       "DELETE from msdata where msdata.msorder =1 and  exists (SELECT d1.*
@@ -1629,7 +1667,7 @@ sub loaddoubletlist_db    #Used to get mass-doublets from the data.
 			  ORDER BY d1.scan_num ASC "
         );
 
-        #       warn "Exceuting Doublet Search\n";
+#                warn "Exceuting Doublet Search\n";
         if ($match_intensity == "1") {
             if ($ms1_intensity_ratio == '0' or !defined $ms1_intensity_ratio) { $ms1_intensity_ratio = 1 }
 

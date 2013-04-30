@@ -46,7 +46,7 @@ if ($data[0] != $table) {
     exit;
 }
 
-my $results_dbh = DBI->connect("dbi:SQLite:dbname=db/results-$table", "", "", { RaiseError => 1, AutoCommit => 1 });
+my $results_dbh =      connect_db_results($table);
 
 ########################
 #                      #
@@ -244,7 +244,7 @@ print "<div class='row'><div class='alert alert-error'>
 }
 
 my $sequences = $results_dbh->prepare(
-"SELECT DISTINCT seq FROM (Select distinct sequence1_name as seq, name from results where name=? union select distinct sequence2_name, name as seq from results WHERE name=?)"
+"SELECT DISTINCT seq FROM (Select distinct sequence1_name as seq, name from results where name=? union select distinct sequence2_name, name as seq from results WHERE name=?) as s"
 );
 $sequences->execute($table, $table);
 

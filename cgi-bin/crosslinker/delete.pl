@@ -13,6 +13,8 @@ use DBI;
 
 use lib 'lib';
 use Crosslinker::HTML;
+use Crosslinker::Data;
+use Crosslinker::UserSettings;
 
 my $query      = new CGI;
 my $table      = $query->param('table');
@@ -24,7 +26,7 @@ my $areyousure = $query->param('areyousure');
 #                      #
 ########################
 
-my $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+my $settings_dbh = connect_settings;
 
 print_page_top_bootstrap('Delete');
 
@@ -37,7 +39,7 @@ if ($data[0] != $table) {
     exit;
 }
 
-my $results_dbh = DBI->connect("dbi:SQLite:dbname=db/results-$table ", "", "", { RaiseError => 1, AutoCommit => 1 });
+my $results_dbh = connect_db_results ($table);
 
 $settings_sql = $settings_dbh->prepare("SELECT finished FROM settings WHERE name = ?");
 $settings_sql->execute($table);
@@ -53,8 +55,13 @@ if ($data[0] != -1 && $data[0] != -4 && $data[0] != -5) {
     $drop_table->execute($table);
     $drop_table = $results_dbh->prepare("DROP TABLE IF EXISTS results");
     $drop_table->execute();
+
+    if (sql_type eq 'mysql') {
+      $results_dbh->do("DROP DATABASE results$table");
+    } else {
+      unlink "db/results-$table" or die "Can't delete $table : $!";
+    }
     $results_dbh->disconnect();
-    unlink "db/results-$table" or die "Can't delete $table : $!";
     unlink "query_data/query-$table.txt" or die "Can't delete $table : $!";
     print_heading("Deleting $table ...");
     print "<p>Sucess: Results '$table' deleted.</p>";

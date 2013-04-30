@@ -58,7 +58,7 @@ if ($scan == -1) {
         exit;
     }
 
-    $results_dbh = DBI->connect("dbi:SQLite:dbname=db/results-$table", "", "", { RaiseError => 1, AutoCommit => 1 });
+    $results_dbh = connect_db_results($table);
 
 }
 #######################

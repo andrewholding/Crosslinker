@@ -50,7 +50,7 @@ if ($data[0] != $table) {
     exit;
 }
 
-my $results_dbh = DBI->connect("dbi:SQLite:dbname=db/results-$table", "", "", { RaiseError => 1, AutoCommit => 1 });
+my $results_dbh =      connect_db_results($table);
 ########################
 #                      #
 # Load Settings        #
@@ -98,7 +98,7 @@ print "<Table class='table offset2 table-striped span8'>
 <tr><td style='font-weight: bold;'>Xlinker Mass</td><td>$xlinker_mass</td><td style='font-weight: bold;'>Monolink</td><td>$mono_mass_diff</td></tr></table>";
 
 my $sequences = $results_dbh->prepare(
-"SELECT DISTINCT seq FROM (Select distinct sequence1_name as seq, name from results where name=? union select distinct sequence2_name, name as seq from results WHERE name=?)"
+"SELECT DISTINCT seq FROM (Select distinct sequence1_name as seq, name from results where name=? union select distinct sequence2_name, name as seq from results WHERE name=?) as p"
 );
 $sequences->execute($table, $table);
 

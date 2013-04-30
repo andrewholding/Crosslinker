@@ -44,7 +44,7 @@ if ($data[0] != $table) {
     exit;
 }
 
-my $results_dbh = DBI->connect("dbi:SQLite:dbname=db/results-$table", "", "", { RaiseError => 1, AutoCommit => 1 });
+my $results_dbh =      connect_db_results($table);
 
 ########################
 #                      #

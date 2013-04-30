@@ -4,6 +4,7 @@ package Crosslinker::Proteins;
 use base 'Exporter';
 use lib 'lib';
 use Crosslinker::Config;
+use Crosslinker::UserSettings;
 
 our @EXPORT = (
                'modifications',      'residue_position',
@@ -66,14 +67,15 @@ my ($results_dbh,  $results_table, $modifications_ref ) = @_;
     my $modify = $results_dbh->prepare("
 	  INSERT INTO peptides
 	  SELECT 
-		 results_table,
-		 sequence,
- 		 source,
-		 linear_only,
+		 null as rowid,
+		 results_table as results_table,
+		 sequence as sequence,
+ 		 source as source,
+		 linear_only as linear_only,
 		 mass + ? as mass, 
 		 ? as modifications,
-		 monolink,
-		 xlink,
+		 monolink as monolink,
+		 xlink as xlink,
 		 ? as no_of_mods
 		 FROM peptides
  			  WHERE modifications = '' and  (LENGTH(sequence) - LENGTH(REPLACE(sequence, ?, ''))) >= (? + 0)
@@ -84,14 +86,15 @@ my ($results_dbh,  $results_table, $modifications_ref ) = @_;
     my $monolinks = $results_dbh->prepare("
 	  INSERT INTO peptides
 	  SELECT 
-		 results_table,
-		 sequence,
- 		 source,
-		 linear_only,
+		 null as  rowid,
+		 results_table as results_table,
+		 sequence as sequence,
+ 		 source as source,
+		 linear_only as linear_only,
 		 mass + ? as mass, 
 		 ? as modifications,
-		 monolink,
-		 xlink,
+		 monolink as monolink,
+		 xlink as xlink,
 		 ? as no_of_mods
 		 FROM peptides
  			  WHERE  sequence LIKE ? and xlink = 0 and monolink > 0 and modifications = '' ;
@@ -129,10 +132,11 @@ my @monolink_masses = split(",", $mono_mass_diff);
     my $monolinks = $results_dbh->prepare("
 	  INSERT INTO peptides
 	  SELECT 
-		 results_table,
-		 sequence,
- 		 source,
-		 linear_only,
+		 null as rowid,
+		 results_table as results_table,
+		 sequence as sequence,
+ 		 source as source,
+		 linear_only as linear_only,
 		 mass + ? as mass, 
 		 '' as modifications,
 		 ? as monolink,
@@ -452,6 +456,8 @@ sub calculate_crosslink_peptides {
     my $xlink_fragment_mass;
     my $xlink_fragment_sources;
 
+
+   
     my $stop_duplicates = 'AND p1.rowid >= p2.rowid';
 
 
@@ -459,9 +465,32 @@ sub calculate_crosslink_peptides {
 
     if ($reactive_sites[0] ne $reactive_sites[1]) {$stop_duplicates = ''};
 
-    my $peptidelist = $results_dbh->prepare("
+    my $peptidelist ;
+
+    if (sql_type eq 'mysql') {
+    $peptidelist = $results_dbh->prepare("
 	  INSERT INTO peptides
 	  SELECT
+		 null as rowid,
+		 p1.results_table as results_table,
+		 concat (p1.sequence, '-', p2.sequence) as sequence,
+ 		 concat (p1.source , '-' , p2.source) as source,
+		 0 as linear_only,
+		 p1.mass + p2.mass as mass, 
+		 '' as modifications,
+		 0 as monolink,
+		 1 as xlink,
+		 0 as no_of_mods
+	
+			  FROM peptides p1 inner join peptides p2 on (p1.results_table = p2.results_table)
+ 			  WHERE p1.linear_only = '0' AND p2.linear_only = '0' AND p1.xlink ='0' and p2.xlink = '0' AND p1.sequence LIKE ? AND p2.sequence LIKE ?
+			  $stop_duplicates
+    ");
+    } else {
+     $peptidelist = $results_dbh->prepare("
+	  INSERT INTO peptides
+	  SELECT
+		 null as rowid,
 		 p1.results_table as results_table,
 		 p1.sequence || '-' || p2.sequence as sequence,
  		 p1.source   || '-' || p2.source as source,
@@ -476,9 +505,15 @@ sub calculate_crosslink_peptides {
  			  WHERE p1.linear_only = '0' AND p2.linear_only = '0' AND p1.xlink ='0' and p2.xlink = '0' AND p1.sequence LIKE ? AND p2.sequence LIKE ?
 			  $stop_duplicates
     ");
+    }
 
-    my $index = $results_dbh->prepare("CREATE INDEX peptide_index ON peptides (sequence);");
-    $index->execute();
+    if (sql_type eq 'mysql') {
+      my $index = $results_dbh->prepare("CREATE INDEX peptide_index ON peptides (sequence(15));");
+      $index->execute();
+    } else {
+      my $index = $results_dbh->prepare("CREATE INDEX peptide_index ON peptides (sequence);");
+      $index->execute();
+    }
 
 
     foreach my $reactive_site_chain_1 (split //, $reactive_sites[0]) 

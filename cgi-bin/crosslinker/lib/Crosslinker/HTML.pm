@@ -138,7 +138,7 @@ sub generate_page {
 					  $xlinker_mass, $missed_clevages, $cut_residues, $mono_mass_diff, \%protein_residuemass);
     }
 
-    $results_dbh->do("delete from peptides where rowid not in (select  min(rowid) from peptides group by sequence)");
+#     $results_dbh->do("delete from peptides where rowid not in (select  min(rowid) from peptides group by sequence)");
 	    #Remove any duplicates
 
     $results_dbh->commit;

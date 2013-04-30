@@ -79,7 +79,7 @@ my (
 $settings->finish();
 
 
-if (defined $query->param('decoy')) { $decoy = $query->param('decoy') }
+# if (defined $query->param('decoy')) { $decoy = $query->param('decoy') }
 
 ########################
 #                      #
@@ -87,7 +87,7 @@ if (defined $query->param('decoy')) { $decoy = $query->param('decoy') }
 #                      #
 ########################
 
-my $results_dbh = DBI->connect("dbi:SQLite:dbname=db/results-$name", "", "", { RaiseError => 1, AutoCommit => 1 });
+my $results_dbh = connect_db_results($name);
 
 ########################
 #                      #
@@ -120,7 +120,7 @@ print "<div class='alert alert-error'>
 
 print "<br/><h4>Settings</h4>";
 
-if   (defined $decoy && $decoy eq "true") { $decoy = "Yes" }
+if   (defined $decoy) { $decoy = "Yes" }
 else                                      { $decoy = "No" }
 
 print "<Table class='table table-striped'>
@@ -170,7 +170,7 @@ if ($short == 1) {
 my $top_hits;
 if (defined $order) {
     $top_hits = $results_dbh->prepare(
-"SELECT * FROM (SELECT * FROM results WHERE name=? AND score > 0 ORDER BY score DESC) ORDER BY sequence1_name, sequence2_name "
+"SELECT * FROM (SELECT * FROM results WHERE name=? AND score > 0 ORDER BY score DESC) AS s ORDER BY sequence1_name, sequence2_name "
     );
 } else {
     $top_hits = $results_dbh->prepare("SELECT * FROM results WHERE name=? AND score > 0 ORDER BY score  DESC")
@@ -195,7 +195,7 @@ if ($short == 1) {
 }
 if (defined $order) {
     $top_hits = $results_dbh->prepare(
-         "SELECT * FROM (SELECT * FROM results WHERE name=? AND score > 0 ORDER BY score DESC) ORDER BY sequence1_name");    
+         "SELECT * FROM (SELECT * FROM results WHERE name=? AND score > 0 ORDER BY score DESC) AS s ORDER BY sequence1_name");    
 } else {
     $top_hits = $results_dbh->prepare("SELECT * FROM results WHERE name=? AND score > 0 ORDER BY score DESC");   
 }
