@@ -538,6 +538,7 @@ sub mgf_doublet_search {
                                       $dbh,               $scan_width,       $mass_of_deuterium,
                                       $mass_of_hydrogen,  $mass_of_carbon13, $mass_of_carbon12,
                                       $match_charge,      $match_intensity,  $ms1_intensity_ratio
+				      , 1
     );
 
     #   print "Match charge: $match_charge";
@@ -573,6 +574,7 @@ sub mgf_doublet_search_mgf_output {
                                       $dbh,               $scan_width,       $mass_of_deuterium,
                                       $mass_of_hydrogen,  $mass_of_carbon13, $mass_of_carbon12,
                                       $match_charge,      $match_intensity,  $ms1_intensity_ratio
+				      ,1
     );
 
     #   print "Match charge: $match_charge";

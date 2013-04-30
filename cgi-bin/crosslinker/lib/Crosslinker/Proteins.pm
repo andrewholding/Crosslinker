@@ -59,12 +59,12 @@ return \@peptides
 
 sub generate_modified_peptides {
 
-my ($results_dbh,  $results_table, $modifications_ref ) = @_;
+my ($results_dbh,  $results_table, $modifications_ref, $single ) = @_;
   my %modifications       = %{$modifications_ref};
 
 my $null_as_rowid = '';
 
-if (sql_type eq 'mysql') { $null_as_rowid = 'null as rowid,'}
+if (sql_type eq 'mysql' &&  $single != 1) { $null_as_rowid = 'null as rowid,'}
     
     my $modify = $results_dbh->prepare("
 	  INSERT INTO peptides

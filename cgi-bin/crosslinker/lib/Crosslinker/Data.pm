@@ -74,10 +74,10 @@ sub generate_decoy {
 
 sub create_results {
 
-    my ($results_dbh) = @_;
+    my ($results_dbh, $single) = @_;
 
 my $row_id_type = '';
-if (sql_type eq 'mysql') { $row_id_type = "rowid INTEGER NOT NULL AUTO_INCREMENT, PRIMARY KEY (rowid),"};
+if (sql_type eq 'mysql' && $single != 1) { $row_id_type = "rowid INTEGER NOT NULL AUTO_INCREMENT, PRIMARY KEY (rowid),"};
 
     _retry 15, sub {
         $results_dbh->do(
@@ -189,12 +189,12 @@ sub connect_db_results {
 
 sub create_settings {
 
-    my ($settings_dbh) = @_;
+    my ($settings_dbh, $single) = @_;
 
 
     my $row_id_type = '';
 
-   if (sql_type eq 'mysql') 
+   if (sql_type eq 'mysql' && $single != 1) 
 	{
 	$row_id_type = "INTEGER NOT NULL AUTO_INCREMENT, PRIMARY KEY (name)";
    } else { 
@@ -238,9 +238,10 @@ sub connect_db_single {
     my $settings_dbh =
       DBI->connect("dbi:SQLite:dbname=db/settings_single", "", "", { RaiseError => 1, AutoCommit => 1 });
 
-    create_results($results_dbh);
+    create_results($results_dbh, 1);
 
-    create_settings($settings_dbh);
+    create_settings($settings_dbh, 1);
+
     my $clean = $settings_dbh->prepare("DELETE from settings where time < ?");
     _retry 15, sub { $clean->execute(time - 84400) };    #Delete any scans over a day old.
     $clean = $results_dbh->prepare("DELETE from results where time < ?");
@@ -381,12 +382,14 @@ sub save_settings {
         $xlinker_mass, $state,           $desc,              $decoy,          $ms2_da,
         $ms1_ppm,      $mass_seperation, $dynamic_mods_ref,  $fixed_mods_ref, $threshold,
         $match_charge, $match_intensity, $scored_ions, $amber_codon ,
-        $non_specific_digest, $no_enzyme_min, $no_enzyme_max
+        $non_specific_digest, $no_enzyme_min, $no_enzyme_max, $single
     ) = @_;
 
     if (!defined $amber_codon) {$amber_codon = 0;};
 
-    create_settings($settings_dbh);
+
+
+    create_settings($settings_dbh, $single);
 
     my $settings_sql = $settings_dbh->prepare(
         "INSERT INTO settings 
@@ -1600,7 +1603,8 @@ sub loaddoubletlist_db    #Used to get mass-doublets from the data.
     my (
         $doublet_ppm_err,  $linkspacing,       $isotope,          $dbh,
         $scan_width,       $mass_of_deuterium, $mass_of_hydrogen, $mass_of_carbon13,
-        $mass_of_carbon12, $match_charge,      $match_intensity,  $ms1_intensity_ratio
+        $mass_of_carbon12, $match_charge,      $match_intensity,  $ms1_intensity_ratio,
+	$single
     ) = @_;
 
 #   warn "$doublet_ppm_err, $linkspacing, $isotope, $dbh, $scan_width, $mass_of_deuterium, $mass_of_hydrogen, $mass_of_carbon13, $mass_of_carbon12, $match_charge";
@@ -1620,7 +1624,7 @@ sub loaddoubletlist_db    #Used to get mass-doublets from the data.
 
     my  $masslist;
 
-	if (sql_type eq 'mysql') {
+	if (sql_type eq 'mysql' && $single != 1) {
 	    $masslist = $dbh->do("alter table  msdata add index (monoisotopic_mw)");	  
 	} else {
 	    $masslist = $dbh->prepare("DROP INDEX IF EXISTS mz_data;");

@@ -84,7 +84,7 @@ my $results_table = save_settings(
                                   $mono_mass_diff,  $xlinker_mass, $state,     $desc,
                                   $decoy,           $ms2_error,    $match_ppm, $mass_seperation,
                                   \@dynamic_mods,   \@fixed_mods,  $threshold, $match_charge,
-                                  $match_intensity, $scored_ions
+                                  $match_intensity, $scored_ions, 0 ,0 ,0 , 0,1
 );
 
 # Setup Modifications

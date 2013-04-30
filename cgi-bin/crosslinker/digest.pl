@@ -59,7 +59,7 @@ my $results_table = save_settings(
                                   $mono_mass_diff, $xlinker_mass, 1,          $desc,
                                   $decoy,          $ms2_error,    $match_ppm, $mass_seperation,
                                   \@dynamic_mods,  \@fixed_mods,  $threshold, 0,
-                                  0,               0
+                                  0,               0,		 1  , 0 , 0, 0, 1
 );
 
 my %protein_residuemass = protein_residuemass($results_table, $dbh);
