@@ -64,13 +64,11 @@ sub get_mods {
 
     if (!defined $dbh) {
       if (sql_type eq 'mysql') {
-	warn 'mysql';
 	$dbh = DBI->connect("dbi:mysql:", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
 	$dbh->do("create database if not exists settings");
 	$dbh->disconnect;
 	$dbh = DBI->connect("dbi:mysql:config", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
       } else {
-	warn 'sqlite';
       $dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
       }
     }

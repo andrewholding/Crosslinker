@@ -138,7 +138,7 @@ sub print_results_text {
     my (
         $top_hits,       $mass_of_hydrogen,  $mass_of_deuterium, $mass_of_carbon12, $mass_of_carbon13,
         $cut_residues,   $protien_sequences, $reactive_site,     $dbh,              $xlinker_mass,
-        $mono_mass_diff, $table,             $repeats,           $xlink_mono_or_all, $settings_dbh
+        $mono_mass_diff, $table,             $repeats,           $xlink_mono_or_all,$settings_dbh
     ) = @_;
 
     my $fasta = $protien_sequences;

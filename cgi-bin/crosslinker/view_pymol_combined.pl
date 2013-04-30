@@ -103,6 +103,15 @@ $settings->execute(@table);
 my %error;
 my %names;
 
+
+       $settings_dbh->do(
+            "CREATE TABLE IF NOT EXISTS pymol_settings (
+								experiment  NUMERIC,
+								setting  TEXT,
+								value  TEXT
+								)"
+        );
+
 foreach my $table_name (@table) {
     my $sequences = $results_dbh->prepare(
 "SELECT DISTINCT seq FROM (Select distinct sequence1_name as seq, name from db$table_name.results where name=? union select distinct sequence2_name, name as seq from results WHERE name=?)"

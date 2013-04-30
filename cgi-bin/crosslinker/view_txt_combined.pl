@@ -16,6 +16,7 @@ use Crosslinker::HTML;
 use Crosslinker::Results;
 use Crosslinker::Constants;
 use Crosslinker::Config;
+use Crosslinker::Data;
 
 ########################
 #                      #
@@ -38,7 +39,7 @@ if (defined $query->param('order')) {
 #                      #
 ########################
 
-my $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+my $settings_dbh = connect_settings;
 
 ########################
 #                      #
@@ -79,7 +80,7 @@ for (my $table_no = 0 ; $table_no < @table ; $table_no++) {
     my $settings_sql = $settings_dbh->prepare("SELECT name FROM settings WHERE name = ?");
     $settings_sql->execute($table[$table_no]);
     my @data = $settings_sql->fetchrow_array();
-    if (@data[0] != $table[$table_no]) {
+    if ($data[0] != $table[$table_no]) {
         print "Content-Type: text/plain\n\n";
         print "Cannont find results database";
         exit;
@@ -115,7 +116,7 @@ while ((my @settings = $settings->fetchrow_array)) {
 }
 
 $settings->finish();
-$settings_dbh->disconnect();
+
 
 my $top_hits;
 $SQL_query = "";
@@ -127,12 +128,14 @@ for (my $table_no = 0 ; $table_no < @table ; $table_no++) {
 $SQL_query = substr($SQL_query, 0, -10);
 $top_hits = $results_dbh->prepare("SELECT * FROM (" . $SQL_query . ") ORDER BY score DESC ");
 $top_hits->execute(@table);
+
 print_results_text(
                    $top_hits,         $mass_of_hydrogen, $mass_of_deuterium,          $mass_of_carbon12,
                    $mass_of_carbon13, $cut_residues,     $protein_sequences_combined, $reactive_site,
                    $results_dbh,      $xlinker_mass,     $mono_mass_diff,             'table',
-                   0,                 2,                 0
+                   0,                 2,                 , $settings_dbh
 );
+
 
 print "\nMonolinks\n";
 $top_hits->execute(@table);
@@ -140,7 +143,7 @@ print_results_text(
                    $top_hits,         $mass_of_hydrogen, $mass_of_deuterium,          $mass_of_carbon12,
                    $mass_of_carbon13, $cut_residues,     $protein_sequences_combined, $reactive_site,
                    $results_dbh,      $xlinker_mass,     $mono_mass_diff,             'table',
-                   0,                 1,                 0
+                   0,                 1,                  $settings_dbh
 );
 
 $top_hits->finish();
