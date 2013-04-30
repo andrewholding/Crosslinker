@@ -76,7 +76,7 @@ sub create_results {
 
     my ($results_dbh) = @_;
 
-my $row_id_type;
+my $row_id_type = '';
 if (sql_type eq 'mysql') { $row_id_type = "rowid INTEGER NOT NULL AUTO_INCREMENT, PRIMARY KEY (rowid),"};
 
     _retry 15, sub {
@@ -192,7 +192,7 @@ sub create_settings {
     my ($settings_dbh) = @_;
 
 
-    my $row_id_type;
+    my $row_id_type = '';
 
    if (sql_type eq 'mysql') 
 	{
@@ -211,7 +211,7 @@ sub create_settings {
 						      reactive_site TEXT,
 						      mono_mass_diff TEXT,
 						      xlinker_mass TEXT,
-						      decoy NUMERIC,
+						      decoy TEXT,
 						      ms2_da TEXT,
 						      ms1_ppm FLOAT,
 						      finished FLOAT,
@@ -1377,7 +1377,7 @@ sub create_peptide_table {
 
     my ($dbh) = @_;
 
-my $row_id_type ;
+my $row_id_type = '';
 
 if (sql_type eq 'mysql') { $row_id_type = "rowid INTEGER NOT NULL AUTO_INCREMENT, PRIMARY KEY (rowid),"};
 

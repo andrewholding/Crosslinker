@@ -22,7 +22,7 @@ sub installed {
 sub sql_type {
 
 
-return 'mysql'; #mysql or sqlite
+return 'sqlite'; #mysql or sqlite
 }
 
 1;

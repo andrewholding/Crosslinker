@@ -62,12 +62,14 @@ sub generate_modified_peptides {
 my ($results_dbh,  $results_table, $modifications_ref ) = @_;
   my %modifications       = %{$modifications_ref};
 
+my $null_as_rowid = '';
 
+if (sql_type eq 'mysql') { $null_as_rowid = 'null as rowid,'}
     
     my $modify = $results_dbh->prepare("
 	  INSERT INTO peptides
 	  SELECT 
-		 null as rowid,
+		 $null_as_rowid
 		 results_table as results_table,
 		 sequence as sequence,
  		 source as source,
@@ -86,7 +88,7 @@ my ($results_dbh,  $results_table, $modifications_ref ) = @_;
     my $monolinks = $results_dbh->prepare("
 	  INSERT INTO peptides
 	  SELECT 
-		 null as  rowid,
+		 $null_as_rowid
 		 results_table as results_table,
 		 sequence as sequence,
  		 source as source,
@@ -127,12 +129,14 @@ sub generate_monolink_peptides {
 my ($results_dbh,  $results_table,   $reactive_site, $mono_mass_diff) = @_;
 my @monolink_masses = split(",", $mono_mass_diff);
 
+my $null_as_rowid = '';
 
+if (sql_type eq 'mysql') { $null_as_rowid = 'null as rowid,'}
 
     my $monolinks = $results_dbh->prepare("
 	  INSERT INTO peptides
 	  SELECT 
-		 null as rowid,
+		 $null_as_rowid
 		 results_table as results_table,
 		 sequence as sequence,
  		 source as source,
@@ -467,6 +471,7 @@ sub calculate_crosslink_peptides {
 
     my $peptidelist ;
 
+
     if (sql_type eq 'mysql') {
     $peptidelist = $results_dbh->prepare("
 	  INSERT INTO peptides
@@ -490,7 +495,6 @@ sub calculate_crosslink_peptides {
      $peptidelist = $results_dbh->prepare("
 	  INSERT INTO peptides
 	  SELECT
-		 null as rowid,
 		 p1.results_table as results_table,
 		 p1.sequence || '-' || p2.sequence as sequence,
  		 p1.source   || '-' || p2.source as source,
