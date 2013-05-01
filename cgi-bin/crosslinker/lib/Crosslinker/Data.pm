@@ -1400,7 +1400,7 @@ if (sql_type eq 'mysql') { $row_id_type = "rowid INTEGER NOT NULL AUTO_INCREMENT
 					    linear_only   NUMERIC,
 					    mass 	  DOUBLE,
 					    modifications TEXT,
-					    monolink 	  NUMERIC,
+					    monolink 	  DOUBLE,
 					    xlink 	  NUMERIC,
 					    no_of_mods 	  NUMERIC) "
         );
