@@ -76,6 +76,8 @@ sub create_results {
 
     my ($results_dbh, $single) = @_;
 
+   if (!defined $single) { $single = 0};
+
 my $row_id_type = '';
 if (sql_type eq 'mysql' && $single != 1) { $row_id_type = "rowid INTEGER NOT NULL AUTO_INCREMENT, PRIMARY KEY (rowid),"};
 
@@ -191,7 +193,8 @@ sub create_settings {
 
     my ($settings_dbh, $single) = @_;
 
-
+       if (!defined $single) { $single = 0};
+  
     my $row_id_type = '';
 
    if (sql_type eq 'mysql' && $single != 1) 
@@ -343,11 +346,11 @@ sub give_permission {
 }
 
 sub is_ready {
-    my ($settings_dbh, $ignore_waiting_searches) = @_;
-
+    my ($settings_dbh, $ignore_waiting_searches, $single) = @_;
+  
     if (!defined $ignore_waiting_searches) { $ignore_waiting_searches = 0 }
 
-    create_settings($settings_dbh);
+    create_settings($settings_dbh, $single);
 
     my $settings_sql;
 
@@ -385,7 +388,9 @@ sub save_settings {
         $non_specific_digest, $no_enzyme_min, $no_enzyme_max, $single
     ) = @_;
 
+
     if (!defined $amber_codon) {$amber_codon = 0;};
+    if (!defined $single) { $single = 0};
 
 
 
@@ -433,7 +438,7 @@ sub save_settings {
     };
 
     my $results_table;
-    if (sql_type eq 'mysql') { 
+    if (sql_type eq 'mysql' && $single != 1) { 
       $results_table = $settings_dbh->{'mysql_insertid'};
     } else {
       $results_table = $settings_dbh->func('last_insert_rowid');
@@ -1608,6 +1613,8 @@ sub loaddoubletlist_db    #Used to get mass-doublets from the data.
     ) = @_;
 
 #   warn "$doublet_ppm_err, $linkspacing, $isotope, $dbh, $scan_width, $mass_of_deuterium, $mass_of_hydrogen, $mass_of_carbon13, $mass_of_carbon12, $match_charge";
+
+    if (!defined $single) { $single = 0};
 
     my $mass_seperation = 0;
     if ($isotope eq "deuterium") {

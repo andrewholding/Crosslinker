@@ -293,7 +293,7 @@ sub generate_page_single_scan {
     my @peaklist = loaddoubletlist_db(
                                       10,                $seperation,        $isotope,          $dbh,
                                       $scan_width,       $mass_of_deuterium, $mass_of_hydrogen, $mass_of_carbon13,
-                                      $mass_of_carbon12, $match_charge,      $match_intensity
+                                      $mass_of_carbon12, $match_charge,      $match_intensity, 0 ,1
     );
 
     my $doublets_found = @peaklist;

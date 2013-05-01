@@ -74,7 +74,7 @@ my $precursor_mass   = $query->param("precursor_mass");
 my $time = time;
 
 # Save Settings
-my $state = is_ready($settings_dbh);
+my $state = is_ready($settings_dbh, 0, 1);
 
 if ($reactive_site =~ /[^,]/) {  $reactive_site = $reactive_site . ',' . $reactive_site};
 
@@ -84,10 +84,11 @@ my $results_table = save_settings(
                                   $mono_mass_diff,  $xlinker_mass, $state,     $desc,
                                   $decoy,           $ms2_error,    $match_ppm, $mass_seperation,
                                   \@dynamic_mods,   \@fixed_mods,  $threshold, $match_charge,
-                                  $match_intensity, $scored_ions, 0 ,0 ,0 , 0,1
+                                  $match_intensity, $scored_ions, 0 ,0 ,0 , 0, 1
 );
 
 # Setup Modifications
+
 
 
 
