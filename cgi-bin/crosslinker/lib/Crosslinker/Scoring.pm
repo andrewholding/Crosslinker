@@ -1144,7 +1144,7 @@ sub calc_score {
                     my $n_beta_d2;
 
                     if ($fast_mode == 0) {
-                        my $count_detailed = $dbh->prepare("SELECT COUNT(theoretical.mass)  FROM theoretical WHERE x=? AND y=? AND sequence=? AND mass > ? AND mass <= ? AND heavy_light = '?' AND peptide_chain ='?'  AND is_scored = '?'" );
+                        my $count_detailed = $dbh->prepare("SELECT COUNT(theoretical.mass)  FROM theoretical WHERE x=? AND y=? AND sequence=? AND mass > ? AND mass <= ? AND heavy_light = ? AND peptide_chain =?  AND is_scored = ?" );
                         _retry 15, sub { $count_detailed->execute($xlink_position[0], $xlink_position[1], $sequence, $interval, $interval + $interval_range, 0, 0, 1); };
                         $n_alpha = $count_detailed->fetchrow_array;
                         _retry 15, sub { $count_detailed->execute($xlink_position[0], $xlink_position[1], $sequence, $interval, $interval + $interval_range, 1, 0, 1); };
@@ -1167,7 +1167,7 @@ sub calc_score {
                         my $k_beta_d2;
 
                         if ($fast_mode == 0) {
-                            my $count_detailed = $dbh->prepare("SELECT COUNT(DISTINCT theoretical.mass)  FROM theoretical inner join (select  * from ms2 WHERE mass > ? AND mass <= ?  AND ms2.abundance > ?  AND ms2.heavy_light = ?  ORDER BY ms2.abundance+0 DESC LIMIT ?) as top_ms2 on (top_ms2.mass between theoretical.mass -  ? and theoretical.mass + ?) WHERE x=? AND y=? and sequence=? AND theoretical.mass > ? AND theoretical.mass <= ? AND theoretical.heavy_light = '?' AND theoretical.is_scored = '1'AND theoretical.peptide_chain = '?' AND top_ms2.possible_ion_shift >= theoretical.crosslink_ion AND top_ms2.possible_no_ion_shift >= theoretical.not_crosslink_ion  ");
+                            my $count_detailed = $dbh->prepare("SELECT COUNT(DISTINCT theoretical.mass)  FROM theoretical inner join (select  * from ms2 WHERE mass > ? AND mass <= ?  AND ms2.abundance > ?  AND ms2.heavy_light = ?  ORDER BY ms2.abundance+0 DESC LIMIT ?) as top_ms2 on (top_ms2.mass between theoretical.mass -  ? and theoretical.mass + ?) WHERE x=? AND y=? and sequence=? AND theoretical.mass > ? AND theoretical.mass <= ? AND theoretical.heavy_light = ? AND theoretical.is_scored = '1'AND theoretical.peptide_chain = ? AND top_ms2.possible_ion_shift >= theoretical.crosslink_ion AND top_ms2.possible_no_ion_shift >= theoretical.not_crosslink_ion  ");
                            _retry 15, sub {
                                 $count_detailed->execute(
                                                 $interval,                           $interval + $interval_range,
@@ -1477,9 +1477,9 @@ sub calc_score {
     $matchlist->finish();
     $dbh->disconnect();
 # 
-         if ( $best_match > 0 ) {
-            warn "Best: $best_sequence - Score: ", sprintf( "%.0f", ($best_match) ),"\n";
-          }
+#          if ( $best_match > 0 ) {
+#             warn "Best: $best_sequence - Score: ", sprintf( "%.0f", ($best_match) ),"\n";
+#           }
 #     my $td = tv_interval($t0);
 
 #     warn "$td\n";
