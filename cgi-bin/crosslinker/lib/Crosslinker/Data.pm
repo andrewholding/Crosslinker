@@ -2,11 +2,6 @@ use strict;
 
 package Crosslinker::Data;
 use base 'Exporter';
-use lib 'lib';
-use Crosslinker::Scoring;
-use Crosslinker::Config;
-use Crosslinker::Constants;
-use Crosslinker::UserSettings;
 use MIME::Base64;
 
 our @EXPORT = (
@@ -19,11 +14,39 @@ our @EXPORT = (
                'set_state',        'create_results',      'import_mzXML',             'create_peptide_table',
                'add_peptide',	   'connect_settings'
 );
+
+use lib 'lib';
+use Crosslinker::Scoring;
+use Crosslinker::Config;
+use Crosslinker::Constants;
+use Crosslinker::UserSettings;
+
 ######
 #
 # Data import functions & database management
 #
 ######
+
+sub connect_db_results {
+    my ($name, $autocommit) = @_;
+
+    if (!defined $autocommit) { $autocommit = 1 }
+    my $results_dbh;
+
+  if (sql_type eq 'mysql') {
+      $results_dbh = DBI->connect("dbi:mysql:", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+      $results_dbh->do("create database if not exists results$name");
+      $results_dbh->disconnect;
+      $results_dbh = DBI->connect("dbi:mysql:results$name", "root", "crosslinker", { RaiseError => 1, AutoCommit => $autocommit });
+    }
+    else {
+      $results_dbh = DBI->connect("dbi:SQLite:dbname=db/results-$name", "", "", { RaiseError => 1, AutoCommit => $autocommit });
+    }
+
+    create_results($results_dbh);
+
+    return ($results_dbh);
+}
 
 sub _retry {
     my ($retrys, $func, $ignore_if_fail) = @_;
@@ -168,26 +191,7 @@ sub connect_settings {
 }
 
 
-sub connect_db_results {
-    my ($name, $autocommit) = @_;
 
-    if (!defined $autocommit) { $autocommit = 1 }
-    my $results_dbh;
-
-  if (sql_type eq 'mysql') {
-      $results_dbh = DBI->connect("dbi:mysql:", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
-      $results_dbh->do("create database if not exists results$name");
-      $results_dbh->disconnect;
-      $results_dbh = DBI->connect("dbi:mysql:results$name", "root", "crosslinker", { RaiseError => 1, AutoCommit => $autocommit });
-    }
-    else {
-      $results_dbh = DBI->connect("dbi:SQLite:dbname=db/results-$name", "", "", { RaiseError => 1, AutoCommit => $autocommit });
-    }
-
-    create_results($results_dbh);
-
-    return ($results_dbh);
-}
 
 sub create_settings {
 
@@ -872,9 +876,9 @@ sub matchpeaks {
 use Parallel::ForkManager;
 my $threads = 0;
 
-if (sql_type eq 'mysql') {$threads = 4};
+if (sql_type eq 'mysql') {$threads = no_of_threads};
 
-my $pm = Parallel::ForkManager->new($threads);
+my $pm = Parallel::ForkManager->new(4);
 
     foreach my $peak (@peaklist) {
 

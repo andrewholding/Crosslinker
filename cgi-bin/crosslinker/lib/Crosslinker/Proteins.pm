@@ -3,6 +3,7 @@ use strict;
 package Crosslinker::Proteins;
 use base 'Exporter';
 use lib 'lib';
+use Crosslinker::Data;
 use Crosslinker::Config;
 use Crosslinker::UserSettings;
 
@@ -384,35 +385,59 @@ sub digest_proteins_masses    #Calculates the mass of a list of peptides
 }
 
 sub calculate_peptide_masses {
-    my ($results_dbh, $results_table, $protein_residuemass_ref, $fragment_source_ref) = @_;
+    my ($results_table, $protein_residuemass_ref, $fragment_source_ref) = @_;
     my %protein_residuemass = %{$protein_residuemass_ref};
     my %fragment_source     = %{$fragment_source_ref};
     my $peptide_mass        = 0;
     my $terminalmass        = 1.0078250 * 2 + 15.9949146 * 1;
+    my $count = 0;
 
-    my $peptidelist = $results_dbh->prepare("SELECT * FROM peptides WHERE results_table = ?");
+    my $results_dbh =  Crosslinker::Data::connect_db_results($results_table);
+    my $sequencelist = $results_dbh->prepare("select distinct source from peptides where xlink = 0");
+    $sequencelist->execute;
+    my $rows = $sequencelist->rows;
 
-    my $update_mass = $results_dbh->prepare("UPDATE peptides SET mass = ? WHERE  results_table = ? AND sequence = ?;");
+    my $threads = 0;
+    if (sql_type eq 'mysql') {$threads = no_of_threads};
+    my $pm = Parallel::ForkManager->new($threads);
 
-    $peptidelist->execute($results_table);
+    while (my $source = $sequencelist->fetchrow_hashref) {
+      warn "Calculating masses ... ", sprintf("%.0f", ($count / $rows) *100) , "%\n";
+      $count++;
+    
+      $pm->start and next; # do the fork
+     
+      my $results_dbh_fork =  Crosslinker::Data::connect_db_results($results_table,0);
+      my $peptidelist = $results_dbh_fork->prepare("SELECT * FROM peptides WHERE results_table = ? AND source = ?");
+      my $update_mass = $results_dbh_fork->prepare("UPDATE peptides SET mass = ? WHERE  results_table = ? AND sequence = ?;");
 
-    while (my $peptides = $peptidelist->fetchrow_hashref) {
-        my $peptide = $peptides->{'sequence'};
-        if ($peptide =~ /[ARNDCEQGHILKMFPSTWYV]/) {
-            my @residues = split //, $peptide;
+      $peptidelist->execute($results_table, $source->{'source'});
 
-            foreach my $residue (@residues) {    #split the peptide in indivual amino acids
-                $peptide_mass =
-                  $peptide_mass + $protein_residuemass{$residue};    #tally the masses of each amino acid one at a time
-            }
+      while (my $peptides = $peptidelist->fetchrow_hashref) {
+	  my $peptide = $peptides->{'sequence'};
+	  if ($peptide =~ /[ARNDCEQGHILKMFPSTWYV]/) {
+	      my @residues = split //, $peptide;
+  
+	      foreach my $residue (@residues) {    #split the peptide in indivual amino acids
+		  $peptide_mass =
+		    $peptide_mass + $protein_residuemass{$residue};    #tally the masses of each amino acid one at a time
+	      }
 
-            #          $protein_fragments_masses{$peptide} = $peptide_mass + $terminalmass;
-            $update_mass->execute($peptide_mass + $terminalmass, $results_table, $peptide);
-            $peptide_mass = 0;
-        }
+	      #          $protein_fragments_masses{$peptide} = $peptide_mass + $terminalmass;
+	      $update_mass->execute($peptide_mass + $terminalmass, $results_table, $peptide);
+	      $peptide_mass = 0;
+	  }
 
+       }
+    $peptidelist->finish;
+    $update_mass->finish;
+    $results_dbh_fork->commit;
+    $results_dbh_fork->disconnect;
+    $pm->finish; 
     }
-
+    $pm->wait_all_children;
+    $sequencelist->finish;
+    $results_dbh->disconnect;
 }
 
 sub crosslink_peptides                                               #Calculates all the possible xlinks
@@ -454,13 +479,14 @@ sub crosslink_peptides                                               #Calculates
 sub calculate_crosslink_peptides {
 
     my (
-        $results_dbh,  $results_table,   $reactive_site, $min_peptide_length,
+          $results_table,   $reactive_site, $min_peptide_length,
         $xlinker_mass, $missed_clevages, $cut_residues
     ) = @_;
 
     my $xlink;
     my $xlink_fragment_mass;
     my $xlink_fragment_sources;
+    my $results_dbh =  Crosslinker::Data::connect_db_results($results_table);
 
 
    
@@ -473,46 +499,6 @@ sub calculate_crosslink_peptides {
 
     my $peptidelist ;
 
-
-    if (sql_type eq 'mysql') {
-    $peptidelist = $results_dbh->prepare("
-	  INSERT INTO peptides
-	  SELECT
-		 null as rowid,
-		 p1.results_table as results_table,
-		 concat (p1.sequence, '-', p2.sequence) as sequence,
- 		 concat (p1.source , '-' , p2.source) as source,
-		 0 as linear_only,
-		 p1.mass + p2.mass as mass, 
-		 '' as modifications,
-		 0 as monolink,
-		 1 as xlink,
-		 0 as no_of_mods
-	
-			  FROM peptides p1 inner join peptides p2 on (p1.results_table = p2.results_table)
- 			  WHERE p1.linear_only = '0' AND p2.linear_only = '0' AND p1.xlink ='0' and p2.xlink = '0' AND p1.sequence LIKE ? AND p2.sequence LIKE ?
-			  $stop_duplicates
-    ");
-    } else {
-     $peptidelist = $results_dbh->prepare("
-	  INSERT INTO peptides
-	  SELECT
-		 p1.results_table as results_table,
-		 p1.sequence || '-' || p2.sequence as sequence,
- 		 p1.source   || '-' || p2.source as source,
-		 0 as linear_only,
-		 p1.mass + p2.mass as mass, 
-		 '' as modifications,
-		 0 as monolink,
-		 1 as xlink,
-		 0 as no_of_mods
-	
-			  FROM peptides p1 inner join peptides p2 on (p1.results_table = p2.results_table)
- 			  WHERE p1.linear_only = '0' AND p2.linear_only = '0' AND p1.xlink ='0' and p2.xlink = '0' AND p1.sequence LIKE ? AND p2.sequence LIKE ?
-			  $stop_duplicates
-    ");
-    }
-
     if (sql_type eq 'mysql') {
       my $index = $results_dbh->prepare("CREATE INDEX peptide_index ON peptides (sequence(15));");
       $index->execute();
@@ -521,20 +507,84 @@ sub calculate_crosslink_peptides {
       $index->execute();
     }
 
+ 
+    my $sequencelist = $results_dbh->prepare("select distinct source from peptides where xlink = 0");
+    $sequencelist->execute;
+    my $rows = $sequencelist->rows;
+    my $count = 0;
+  
+    my $threads = 0;
+    if (sql_type eq 'mysql') {$threads = no_of_threads};
+    my $pm = Parallel::ForkManager->new($threads);
 
-    foreach my $reactive_site_chain_1 (split //, $reactive_sites[0]) 
-      {
-      foreach my $reactive_site_chain_2 (split //, $reactive_sites[1]) 
-	{
-# 	warn "%".$reactive_site_chain_1."_%","%".$reactive_site_chain_2."_%";
- 	$peptidelist->execute("%".$reactive_site_chain_1."_%","%".$reactive_site_chain_2."_%");
-	$results_dbh->commit;
+
+
+    while (my $source = $sequencelist->fetchrow_hashref) {
+      warn "Crosslinking peptides  ... ", sprintf("%.0f", ($count / $rows) *100) , "%\n";
+      $count++;
+      $pm->start and next;
+
+	my $results_dbh_fork =  Crosslinker::Data::connect_db_results($results_table, 0);
+
+	if (sql_type eq 'mysql') {
+	$peptidelist = $results_dbh_fork->prepare("
+	      INSERT INTO peptides
+	      SELECT
+		    null as rowid,
+		    p1.results_table as results_table,
+		    concat (p1.sequence, '-', p2.sequence) as sequence,
+		    concat (p1.source , '-' , p2.source) as source,
+		    0 as linear_only,
+		    p1.mass + p2.mass + ? as mass, 
+		    '' as modifications,
+		    0 as monolink,
+		    1 as xlink,
+		    0 as no_of_mods
+	    
+			      FROM peptides p1 inner join peptides p2 on (p1.results_table = p2.results_table)
+			      WHERE p1.source = ? and p1.linear_only = '0' AND p2.linear_only = '0' AND p1.xlink ='0' and p2.xlink = '0' AND p1.sequence LIKE ? AND p2.sequence LIKE ?
+			      $stop_duplicates
+	");
+	} else {
+	$peptidelist = $results_dbh_fork->prepare("
+	      INSERT INTO peptides
+	      SELECT
+		    p1.results_table as results_table,
+		    p1.sequence || '-' || p2.sequence as sequence,
+		    p1.source   || '-' || p2.source as source,
+		    0 as linear_only,
+		    p1.mass + p2.mass + ? as mass, 
+		    '' as modifications,
+		    0 as monolink,
+		    1 as xlink,
+		    0 as no_of_mods
+	    
+			      FROM peptides p1 inner join peptides p2 on (p1.results_table = p2.results_table)
+			      WHERE  p1.source = ? and p1.linear_only = '0' AND p2.linear_only = '0' AND p1.xlink ='0' and p2.xlink = '0' AND p1.sequence LIKE ? AND p2.sequence LIKE ?
+			      $stop_duplicates
+	");
 	}
-      }
-      
-    my $correct_xlink_mass =
-      $results_dbh->prepare("UPDATE peptides SET mass = mass + ? WHERE  xlink = 1 and results_table = ?;");
-    $correct_xlink_mass->execute($xlinker_mass, $results_table);
+
+	foreach my $reactive_site_chain_1 (split //, $reactive_sites[0]) 
+	  {
+	  foreach my $reactive_site_chain_2 (split //, $reactive_sites[1]) 
+	    {
+    # 	warn "%".$reactive_site_chain_1."_%","%".$reactive_site_chain_2."_%";
+	    $peptidelist->execute($xlinker_mass, $source->{'source'}, "%".$reactive_site_chain_1."_%","%".$reactive_site_chain_2."_%");
+	    $results_dbh_fork->commit;
+	    }
+	  }
+	  $peptidelist->finish;
+	  $results_dbh_fork->disconnect;
+# 	my $correct_xlink_mass =
+# 	  $results_dbh->prepare("UPDATE peptides SET mass = mass + ? WHERE  xlink = 1 and results_table = ?;");
+# 	$correct_xlink_mass->execute($xlinker_mass, $results_table);
+      $pm->finish; 
+     }
+     $pm->wait_all_children;
+
+      $sequencelist->finish;
+      $results_dbh->disconnect;
 
     #Need to add xlinker mass to all xlinks with UPDATE statments.
 

@@ -114,36 +114,41 @@ sub generate_page {
     warn "Run $results_table: Calulating masses...  \n";
 
     $results_dbh->disconnect;
-    ($results_dbh) = connect_db_results($results_table, 0);
+#     ($results_dbh) = connect_db_results($results_table, 0);
 
-    calculate_peptide_masses($results_dbh, $results_table, \%protein_residuemass, \%fragment_source);
+    calculate_peptide_masses($results_table, \%protein_residuemass, \%fragment_source);
 
-    $results_dbh->commit;
+#     $results_dbh->commit;
 
     warn "Run $results_table: Crosslinking peptides...  \n";
 
     
 
-    $results_dbh->disconnect;
-    ($results_dbh) = connect_db_results($results_table, 0);
+#     $results_dbh->disconnect;
+    
 
     if ($reactive_site =~ /[^,]/) {  $reactive_site = $reactive_site . ',' . $reactive_site};
 
 
     if ($amber_codon == 0) {
-      calculate_crosslink_peptides($results_dbh,  $results_table,   $reactive_site, $min_peptide_length,
+      calculate_crosslink_peptides( $results_table,   $reactive_site, $min_peptide_length,
 				   $xlinker_mass, $missed_clevages, $cut_residues);
     } else {
+      ($results_dbh) = connect_db_results($results_table, 0);
       calculate_amber_crosslink_peptides($results_dbh,  $results_table,   $reactive_site, $min_peptide_length,
 					  $xlinker_mass, $missed_clevages, $cut_residues, $mono_mass_diff, \%protein_residuemass);
+      $results_dbh->commit;
+      $results_dbh->disconnect;
+      ($results_dbh) = connect_db_results($results_table);
+      
+
     }
 
 #     $results_dbh->do("delete from peptides where rowid not in (select  min(rowid) from peptides group by sequence)");
 	    #Remove any duplicates
 
-    $results_dbh->commit;
-    $results_dbh->disconnect;
-    ($results_dbh) = connect_db_results($results_table);
+
+    
 
 
     if ($amber_codon == 0) {
