@@ -12,7 +12,7 @@ our @EXPORT = ('version', 'installed', 'sql_type');
 
 
 sub version {
-    return '0.9.3';
+    return '1.0.0';
 }
 
 sub installed {

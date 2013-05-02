@@ -855,8 +855,70 @@ sub matchpeaks {
     #
 ######
     my $time = time;
-    my $results_sql = $results_dbh->prepare(
-        "INSERT INTO results (
+   
+
+#     my $peptides = $results_dbh->prepare("select * from peptides where results_table = ? AND (xlink = 1 or monolink <> 0) and mass between ? and ?");
+
+#######
+    #
+    #
+    #
+#######
+
+#     my %drivers = DBI->installed_drivers();
+#     my @all_dbh = grep { defined } map { @{$_->{ChildHandles}} } values %drivers;
+#     $_->disconnect for @all_dbh;
+
+use Parallel::ForkManager;
+my $threads = 0;
+
+if (sql_type eq 'mysql') {$threads = 4};
+
+my $pm = Parallel::ForkManager->new($threads);
+
+    foreach my $peak (@peaklist) {
+
+# 	warn $peak->{'scan_num'};
+#                 warn $peak->{'d2_scan_num'};
+        $peak_no = $peak_no + 1;
+
+	my $percent_done = 0;
+# 
+#                 warn $percent_done * 100, " % Peak mz = " . sprintf( "%.5f", $peak->{'mz'} ) . "\n";
+
+
+	$pm->start and next; # do the fork
+
+
+ 
+
+              
+	my $settings_dbh_fork = connect_settings();
+	my $results_dbh_fork = connect_db_results($results_table);
+
+        if (check_state($settings_dbh_fork, $results_table) == -4) {
+            return %fragment_score;
+        }
+
+
+
+
+        if ($percent_done != sprintf("%.2f", $peak_no / @peaklist)) {
+            $percent_done = sprintf("%.2f", $peak_no / @peaklist);
+            update_state($settings_dbh_fork, $results_table, $percent_done);
+        }
+        my $MSn_string    = "";
+        my $d2_MSn_string = "";
+        my $round         = sprintf("%.5f", $peak->{'mz'});
+        $MSn_string = $peak->{'MSn_string'};
+        $d2_MSn_string = $peak->{'d2_MSn_string'};
+
+
+
+
+
+	my $results_sql = $results_dbh_fork->prepare(
+		"INSERT INTO results (
 						      name,
 						      MSn_string,
 						      d2_MSn_string,
@@ -895,38 +957,7 @@ sub matchpeaks {
 						      )VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
     );
 
-    my $peptides = $results_dbh->prepare("select * from peptides where results_table = ? AND (xlink = 1 or monolink <> 0) and mass between ? and ?");
-
-#######
-    #
-    #
-    #
-#######
-
-    foreach my $peak (@peaklist) {
-
-        #        warn $peak->{'scan_num'};
-        #        warn $peak->{'d2_scan_num'};
-        $peak_no = $peak_no + 1;
-        my $percent_done = 0;
-
-        #        warn $percent_done * 100, " % Peak mz = " . sprintf( "%.5f", $peak->{'mz'} ) . "\n";
-
-        if (check_state($settings_dbh, $results_table) == -4) {
-            return %fragment_score;
-        }
-
-        if ($percent_done != sprintf("%.2f", $peak_no / @peaklist)) {
-            $percent_done = sprintf("%.2f", $peak_no / @peaklist);
-            update_state($settings_dbh, $results_table, $percent_done);
-        }
-        my $MSn_string    = "";
-        my $d2_MSn_string = "";
-        my $round         = sprintf("%.5f", $peak->{'mz'});
-        $MSn_string = $peak->{'MSn_string'};
-        $d2_MSn_string = $peak->{'d2_MSn_string'};
-
-
+	my $peptides = $results_dbh_fork->prepare("select * from peptides where results_table = ? AND (xlink = 1 or monolink <> 0) and mass between ? and ?");
         $peptides->execute( $results_table,  $peak->{monoisotopic_mw} / $max_delta , $peak->{monoisotopic_mw} *$max_delta );
 
         while (my $peptide = $peptides->fetchrow_hashref) {
@@ -1060,9 +1091,17 @@ sub matchpeaks {
                                 };
 
                             
-
+	  
+  
         }
+    $pm->finish; # do the exit in the child process
+
     }
+
+
+
+  $pm->wait_all_children;
+
 
     return %fragment_score;
 

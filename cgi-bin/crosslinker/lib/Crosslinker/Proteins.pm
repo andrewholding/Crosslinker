@@ -62,6 +62,8 @@ sub generate_modified_peptides {
 my ($results_dbh,  $results_table, $modifications_ref, $single ) = @_;
   my %modifications       = %{$modifications_ref};
 
+
+if (!defined $single) {$single = 0};
 my $null_as_rowid = '';
 
 if (sql_type eq 'mysql' &&  $single != 1) { $null_as_rowid = 'null as rowid,'}

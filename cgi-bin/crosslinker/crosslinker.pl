@@ -16,8 +16,10 @@ use lib 'lib';
 use Crosslinker::Constants;
 use Crosslinker::HTML;
 
-$SIG{CHLD} = 'IGNORE';
+# $SIG{CHLD} = 'IGNORE';
 defined(my $child = fork) or die "Cannot fork: $!\n";
+
+
 if ($child) {
     print_page_top_bootstrap('Crosslinker');
     print_heading('File Upload');
@@ -46,7 +48,7 @@ if ($child) {
     use Crosslinker::Data;
     use Crosslinker::Proteins;
     use Crosslinker::Scoring;
-    use Crosslinker::Config;
+    use Crosslinker::Config; 
 
     # Constants
     my (
