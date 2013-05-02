@@ -13,12 +13,13 @@ use DBI;
 
 use lib 'lib';
 use Crosslinker::HTML;
+use Crosslinker::Data;
 
 my $query    = new CGI;
 my $table    = $query->param('table');
 my $new_name = $query->param('name');
 
-my $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });
+my $settings_dbh = connect_settings;
 
 print_page_top_bootstrap('Rename');
 
@@ -26,7 +27,7 @@ if (defined $new_name) {
     if ($new_name eq "") { $new_name = "None" }
     my $settings_sql = $settings_dbh->prepare("
 					UPDATE settings 
-					SET desc=?
+					SET description=?
 					WHERE name=?
 					");
 
@@ -35,7 +36,7 @@ if (defined $new_name) {
 } else {
 
     my $table_list = $settings_dbh->prepare(
-                        "SELECT name, desc, finished FROM settings WHERE name=? ORDER BY length(name) DESC, name DESC");
+                        "SELECT name, description, finished FROM settings WHERE name=? ORDER BY length(name) DESC, name DESC");
     $table_list->execute($table);
 
     my $table_name = $table_list->fetchrow_hashref;
