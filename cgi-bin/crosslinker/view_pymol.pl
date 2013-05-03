@@ -157,8 +157,8 @@ while ((my $sequences_results = $sequences->fetchrow_hashref)) {
 								)"
         );
 	if (sql_type eq 'mysql') {
-        $settings_dbh->do("alter table  pymol_settings add unique index (experiment, setting(15))");	  
-	} else {
+#         $settings_dbh->do("CREATE UNIQUE INDEX pymol_index ON pymol_settings (experiment, setting(15))");
+  	} else {
         $settings_dbh->do("CREATE UNIQUE INDEX IF NOT EXISTS pymol_index ON  pymol_settings (experiment, setting)");
 	 }
 
