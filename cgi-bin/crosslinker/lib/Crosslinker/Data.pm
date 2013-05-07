@@ -155,6 +155,7 @@ sub connect_db {
 
     my $dbh;
     my $settings_dbh;
+ 
 
     if (sql_type eq 'mysql') {
       $dbh = DBI->connect("dbi:SQLite:dbname=:memory:", "", "", { RaiseError => 1, AutoCommit => 1 });

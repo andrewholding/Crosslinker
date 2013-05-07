@@ -10,25 +10,47 @@ our @EXPORT = ('version', 'installed', 'sql_type', 'no_of_threads');
 #
 ######
 
+sub load_setting{
+my ($setting_name, $setting) = @_;
+
+open crosslinkerrc, "<", 'crosslinkerrc';
+while (my $line = <crosslinkerrc>) {
+	chomp $line;
+	my @settings = split '=', $line;
+	if ($settings[0] eq $setting_name) {$setting = $settings[1]}; 
+}
+close crosslinkerrc;
+return $setting;
+
+}
 
 sub version {
     return '1.0.0';
 }
 
 sub installed {
-    return 'crosslinker';
+
+my $setting = 'crosslinker'; 
+$setting = load_setting ('installed', $setting);
+return $setting;
 }
 
 sub sql_type {
 
-
-return 'mysql'; #mysql or sqlite
+my $setting = 'mysql'; #mysql or sqlite
+$setting = load_setting ('sqltype', $setting);
+return $setting;
 }
 
 sub no_of_threads {
 
-return 4;
+my $setting = '4'; 
+$setting = load_setting ('threads', $setting);
+return $setting;
+
 }
+
+
 
 
 1;

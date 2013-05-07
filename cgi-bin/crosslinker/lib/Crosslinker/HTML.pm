@@ -149,11 +149,12 @@ sub generate_page {
 
 
     
-
-
     if ($amber_codon == 0) {
+	warn "Run $results_table: Generating Monolinks... \n";
 	generate_monolink_peptides($results_dbh,  $results_table,   $reactive_site, $mono_mass_diff);
     }
+    
+    warn "Run $results_table: Generating Modifications... \n";
     generate_modified_peptides($results_dbh,  $results_table,   \%modifications);
 
     warn "Run $results_table: Finding doublets...  \n";
