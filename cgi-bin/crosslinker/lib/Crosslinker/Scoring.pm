@@ -657,6 +657,7 @@ sub calc_score {
             my @residues     = split //, $peptide;
             my $peptide_mass = 0;
             foreach my $residue (@residues) {    #split the peptide in indivual amino acids
+		warn $residue, $peptide;
                 $peptide_mass =
                   $peptide_mass + $residuemass{$residue};    #tally the masses of each amino acid one at a time
             }

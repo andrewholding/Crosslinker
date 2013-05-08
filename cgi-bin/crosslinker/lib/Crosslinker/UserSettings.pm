@@ -13,13 +13,13 @@ our @EXPORT = ('version', 'installed', 'sql_type', 'no_of_threads');
 sub load_setting{
 my ($setting_name, $setting) = @_;
 
-open crosslinkerrc, "<", 'crosslinkerrc';
-while (my $line = <crosslinkerrc>) {
+open RC_FILE, "<", 'crosslinkerrc';
+while (my $line = <RC_FILE>) {
 	chomp $line;
 	my @settings = split '=', $line;
 	if ($settings[0] eq $setting_name) {$setting = $settings[1]}; 
 }
-close crosslinkerrc;
+close RC_FILE;
 return $setting;
 
 }
@@ -47,7 +47,6 @@ sub no_of_threads {
 my $setting = '4'; 
 $setting = load_setting ('threads', $setting);
 return $setting;
-
 }
 
 

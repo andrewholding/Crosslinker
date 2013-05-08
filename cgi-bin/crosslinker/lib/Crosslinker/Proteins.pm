@@ -67,66 +67,77 @@ my ($results_dbh,  $results_table, $modifications_ref, $single ) = @_;
 if (!defined $single) {$single = 0};
 my $null_as_rowid = '';
 
+
+# my $threads = 0;
+# if (sql_type eq 'mysql') {$threads = no_of_threads};
+# my $pm = Parallel::ForkManager->new($threads);
+
+
 if (sql_type eq 'mysql' &&  $single != 1) { $null_as_rowid = 'null as rowid,'}
     
-    my $modify = $results_dbh->prepare("
-	  INSERT INTO peptides
-	  SELECT 
-		 $null_as_rowid
-		 results_table as results_table,
-		 sequence as sequence,
- 		 source as source,
-		 linear_only as linear_only,
-		 mass + ? as mass, 
-		 ? as modifications,
-		 monolink as monolink,
-		 xlink as xlink,
-		 ? as no_of_mods
-		 FROM peptides
- 			  WHERE modifications = '' and  (LENGTH(sequence) - LENGTH(REPLACE(sequence, ?, ''))) >= (? + 0)
-    ");
-
-#  and (LENGTH(sequence) - LENGTH(REPLACE(sequence, ?, ''))) >= ? ;
-
-    my $monolinks = $results_dbh->prepare("
-	  INSERT INTO peptides
-	  SELECT 
-		 $null_as_rowid
-		 results_table as results_table,
-		 sequence as sequence,
- 		 source as source,
-		 linear_only as linear_only,
-		 mass + ? as mass, 
-		 ? as modifications,
-		 monolink as monolink,
-		 xlink as xlink,
-		 ? as no_of_mods
-		 FROM peptides
- 			  WHERE  sequence LIKE ? and xlink = 0 and monolink > 0 and modifications = '' ;
-    ");
-
 
 
 foreach my $modification (sort(keys %modifications)) {
 
+		    
+# 		    $pm->start and next; # do the fork
 
-                if (   !($modifications{$modification}{Name} eq "loop link" )
-                    && !($modifications{$modification}{Name} eq "mono link" ) 
-		    && !($modifications{$modification}{Name} eq " ")
-                  ) 
-                {
-		    for (my $n = 1; $n <= 3; $n++) {
-# 		    warn  "Modification:" . $modification;
-		    $modify->execute($modifications{$modification}{Delta}*$n,$modification, $n, $modifications{$modification}{Location}, $n+0)
-		    }
-		} elsif ($modifications{$modification}{Name} eq "loop link" ) {
-		    $monolinks->execute($modifications{$modification}{Delta},$modification, 1, "%".$modifications{$modification}{Location}."%")
-		}
+		    
+		    my $results_dbh_fork = Crosslinker::Data::connect_db_results($results_table,0);
+
+
+		    if (   !($modifications{$modification}{Name} eq "loop link" )
+			&& !($modifications{$modification}{Name} eq "mono link" ) 
+			&& !($modifications{$modification}{Name} eq " ")
+		      ) 
+		    {
+			for (my $n = 1; $n <= 3; $n++) {
+			      my $modify = $results_dbh_fork->prepare("
+				    INSERT INTO peptides
+				    SELECT 
+					  $null_as_rowid
+					  results_table as results_table,
+					  sequence as sequence,
+					  source as source,
+					  linear_only as linear_only,
+					  mass + ? as mass, 
+					  ? as modifications,
+					  monolink as monolink,
+					  xlink as xlink,
+					  ? as no_of_mods
+					  FROM peptides
+						    WHERE modifications = '' and  (LENGTH(sequence) - LENGTH(REPLACE(sequence, ?, ''))) >= (? + 0)
+					  ");
+			$modify->execute($modifications{$modification}{Delta}*$n,$modification, $n, $modifications{$modification}{Location}, $n+0)
+			}
+		    } elsif ($modifications{$modification}{Name} eq "loop link" ) {
+			      my $monolinks = $results_dbh_fork->prepare("
+				    INSERT INTO peptides
+				    SELECT 
+					  $null_as_rowid
+					  results_table as results_table,
+					  sequence as sequence,
+					  source as source,
+					  linear_only as linear_only,
+					  mass + ? as mass, 
+					  ? as modifications,
+					  monolink as monolink,
+					  xlink as xlink,
+					  ? as no_of_mods
+					  FROM peptides
+						    WHERE  sequence LIKE ? and xlink = 0 and monolink > 0 and modifications = ''
+			      ");
+			$monolinks->execute($modifications{$modification}{Delta},$modification, 1, "%".$modifications{$modification}{Location}."%");
+		    
+# 		  $pm->finish;
+		  }
+		  $results_dbh_fork->commit;
+	       }  
+#   $pm->wait_all_children;
+   
 }
 
-
-
-}
+ 
 sub generate_monolink_peptides {
 
 my ($results_dbh,  $results_table,   $reactive_site, $mono_mass_diff) = @_;
@@ -598,6 +609,8 @@ sub calculate_amber_crosslink_peptides {
 	$protein_residuemass_ref
     ) = @_;
 
+    my $amber_peptide = substr($amber_peptide, 0, index($amber_peptide, ','));
+
     my $xlink;
     my $xlink_fragment_mass;
     my $xlink_fragment_sources;
@@ -607,9 +620,10 @@ sub calculate_amber_crosslink_peptides {
     my $peptidelist = $results_dbh->prepare("
 	  INSERT INTO peptides
 	  SELECT
+		 null as rowid,
 		 results_table as results_table,
-		 sequence || '-' || ? as sequence,
- 		 source || '-' || '0'  as source,
+		 concat (sequence, '-' , ?) as sequence,
+ 		 concat (source , '-' , '0')  as source,
 		 0 as linear_only,
 		 mass + ? as mass, 
 		 '' as modifications,
@@ -621,22 +635,30 @@ sub calculate_amber_crosslink_peptides {
  			  WHERE linear_only = '0'
     ");
 
-    my $index = $results_dbh->prepare("CREATE INDEX peptide_index ON peptides (sequence);");
-    $index->execute();
 
+
+    if (sql_type eq 'mysql') {
+      my $index = $results_dbh->prepare("CREATE INDEX peptide_index ON peptides (sequence(15));");
+      $index->execute();
+    } else {
+      my $index = $results_dbh->prepare("CREATE INDEX peptide_index ON peptides (sequence);");
+      $index->execute();
+    }
 
 	    my $amber_peptide_mass = 0;
             my @residues = split //, $amber_peptide;
 	    $protein_residuemass{'Z'} = $amber_residue_mass;
 
-            foreach my $residue (@residues) {    
+
+            foreach my $residue (@residues) { 
+# 		warn $residue;
                 $amber_peptide_mass =
                   $amber_peptide_mass + $protein_residuemass{$residue};   
             }
         
 #     warn $protein_residuemass{'Z'},$protein_residuemass{'K'};
 #     warn $amber_peptide_mass + $terminal_mass;
-    $peptidelist->execute($amber_peptide, $amber_peptide_mass+ $terminal_mass);
+    $peptidelist->execute($amber_peptide, $amber_peptide_mass + $terminal_mass);
 
     my $correct_xlink_mass =
       $results_dbh->prepare("UPDATE peptides SET mass = mass + ? WHERE  xlink = 1 and results_table = ?;");

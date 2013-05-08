@@ -876,10 +876,8 @@ sub matchpeaks {
 
 use Parallel::ForkManager;
 my $threads = 0;
-
 if (sql_type eq 'mysql') {$threads = no_of_threads};
-
-my $pm = Parallel::ForkManager->new(4);
+my $pm = Parallel::ForkManager->new($threads);
 
     foreach my $peak (@peaklist) {
 
