@@ -66,7 +66,11 @@ sub generate_page {
     my @sequences = split '>', $protien_sequences;
     my $count = 0;
 
-    warn "Run $results_table: Generating page \n";
+    if (is_verbose == 1 ) { warn "Run $results_table: Generating page \n"} ;
+
+    set_progress ($settings_dbh, $results_table, 'Starting', '0');
+
+    update_state($settings_dbh, $results_table, -3);
 
     create_peptide_table($results_dbh);
 
@@ -93,8 +97,8 @@ sub generate_page {
 
 #         @fragments             = (@fragments,             @sequence_fragments);
 #         @fragments_linear_only = (@fragments_linear_only, @sequence_fragments_linear_only);
-        warn "Run $results_table: Sequence $count = $sequence_names[$count] \n";
-        warn "Run $results_table: Digested peptides:", scalar(@sequence_fragments), " \n";
+              if (is_verbose == 1 ) {warn "Run $results_table: Sequence $count = $sequence_names[$count] \n";};
+              if (is_verbose == 1 ) {warn "Run $results_table: Digested peptides:", scalar(@sequence_fragments), " \n";};
 
         foreach $fragment (@sequence_fragments)
 
@@ -111,7 +115,7 @@ sub generate_page {
 
 #      return '-1';
 
-    warn "Run $results_table: Calulating masses...  \n";
+          if (is_verbose == 1 ) { warn "Run $results_table: Calulating masses...  \n";};
 
     $results_dbh->disconnect;
 #     ($results_dbh) = connect_db_results($results_table, 0);
@@ -120,7 +124,7 @@ sub generate_page {
 
 #     $results_dbh->commit;
 
-    warn "Run $results_table: Crosslinking peptides...  \n";
+          if (is_verbose == 1 ) { warn "Run $results_table: Crosslinking peptides...  \n";};
 
     
 
@@ -150,14 +154,14 @@ sub generate_page {
 
     
     if ($amber_codon == 0) {
-	warn "Run $results_table: Generating Monolinks... \n";
+	      if (is_verbose == 1 ) {warn "Run $results_table: Generating Monolinks... \n";};
 	generate_monolink_peptides($results_dbh,  $results_table,   $reactive_site, $mono_mass_diff);
     }
     
-    warn "Run $results_table: Generating Modifications... \n";
+    if ( is_verbose == 1 ) {warn "Run $results_table: Generating Modifications... \n";};
     generate_modified_peptides($results_dbh,  $results_table,   \%modifications);
 
-    warn "Run $results_table: Finding doublets...  \n";
+    if (is_verbose == 1 ) {warn "Run $results_table: Finding doublets...  \n";};
     my @peaklist = loaddoubletlist_db(
                                       $doublet_tolerance, $seperation,       $isotope,
                                       $results_dbh,       $scan_width,       $mass_of_deuterium,
@@ -168,7 +172,7 @@ sub generate_page {
     my $doublets_found = @peaklist;
     set_doublets_found($results_table, $settings_dbh, $doublets_found);
 
-    warn "Run $results_table: Starting Peak Matches...\n";
+          if (is_verbose == 1 ) {warn "Run $results_table: Starting Peak Matches...\n";};
     my %fragment_score = matchpeaks(
                                     \@peaklist,            $protien_sequences,  $match_ppm,
                                     $results_dbh,          $results_dbh,        $settings_dbh,
@@ -181,7 +185,7 @@ sub generate_page {
                                     $no_xlink_at_cut_site, $fast_mode,		$amber_codon
     );
 
-    warn "Run $results_table: Calculating Peptide FDR...\n";
+          if (is_verbose == 1 ) {warn "Run $results_table: Calculating Peptide FDR...\n";};
 
 
 
@@ -805,7 +809,7 @@ ENDHTML
 
 sub print_page_top_bootstrap    #Prints the end of the HTML page
 {
-    my ($page) = @_;
+    my ($page, $ajax) = @_;
 
 
     my $version = version();
@@ -860,8 +864,38 @@ Content-type: text/html\n\n
     <!--[if lt IE 9]>
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]--> 
- 
-   
+
+ENDHTML
+
+if ($ajax = 1) {
+print '<script>
+(function($)
+{
+    $(document).ready(function()
+    {
+        $.ajaxSetup(
+        {
+            cache: false,
+    
+        });
+        var $container = $("#progressbar");
+        $container.load("progress.pl");
+        var refreshId = setInterval(function()
+        {
+            $container.load("progress.pl");
+        }, 9000);
+	var $percentage = $(".percentage");
+	$(".percentage").each(function(i) { $(this).load("percent.pl?table=" + $(this).data("result") )});
+        var refreshId = setInterval(function()
+        {
+	  $(".percentage").each(function(i) { $(this).load("percent.pl?table=" + $(this).data("result") )});
+        }, 9000);
+    });
+})(jQuery);
+</script>';
+}
+
+print <<ENDHTML;
   </head> 
  
   <body> 

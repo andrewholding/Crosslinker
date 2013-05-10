@@ -2,7 +2,7 @@ use strict;
 
 package Crosslinker::UserSettings;
 use base 'Exporter';
-our @EXPORT = ('version', 'installed', 'sql_type', 'no_of_threads');
+our @EXPORT = ('version', 'installed', 'sql_type', 'no_of_threads', 'is_verbose');
 
 ######
 #
@@ -49,6 +49,12 @@ $setting = load_setting ('threads', $setting);
 return $setting;
 }
 
+sub is_verbose {
+
+my $setting = '0'; 
+$setting = load_setting ('verbose', $setting);
+return $setting;
+}
 
 
 

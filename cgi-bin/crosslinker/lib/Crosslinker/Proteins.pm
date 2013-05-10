@@ -404,6 +404,7 @@ sub calculate_peptide_masses {
     my $count = 0;
 
     my $results_dbh =  Crosslinker::Data::connect_db_results($results_table);
+    my $settings_dbh =  Crosslinker::Data::connect_settings();
     my $sequencelist = $results_dbh->prepare("select distinct source from peptides where xlink = 0");
     $sequencelist->execute;
     my $rows = $sequencelist->rows;
@@ -413,7 +414,10 @@ sub calculate_peptide_masses {
     my $pm = Parallel::ForkManager->new($threads);
 
     while (my $source = $sequencelist->fetchrow_hashref) {
-      warn "Calculating masses ... ", sprintf("%.0f", ($count / $rows) *100) , "%\n";
+      if (is_verbose == 1 ) {warn "Run $results_table: Calculating masses ... ", sprintf("%.0f", ($count / $rows) *100) , "%\n"};
+
+      Crosslinker::Data::set_progress ($settings_dbh, $results_table, 'Calculating masses', sprintf("%.0f", ($count / $rows) *100));
+
       $count++;
     
       $pm->start and next; # do the fork
@@ -498,6 +502,7 @@ sub calculate_crosslink_peptides {
     my $xlink_fragment_mass;
     my $xlink_fragment_sources;
     my $results_dbh =  Crosslinker::Data::connect_db_results($results_table);
+    my $settings_dbh =  Crosslinker::Data::connect_settings();
 
 
    
@@ -531,7 +536,8 @@ sub calculate_crosslink_peptides {
 
 
     while (my $source = $sequencelist->fetchrow_hashref) {
-      warn "Crosslinking peptides  ... ", sprintf("%.0f", ($count / $rows) *100) , "%\n";
+      if (is_verbose == 1 ) {warn "Run $results_table:Crosslinking peptides  ... ", sprintf("%.0f", ($count / $rows) *100) , "%\n"};
+      Crosslinker::Data::set_progress ($settings_dbh, $results_table, 'Crosslinking peptides ', sprintf("%.0f", ($count / $rows) *100));
       $count++;
       $pm->start and next;
 

@@ -18,35 +18,63 @@ $dbh_memory->disconnect;
 
 create_settings($dbh);
 
-my $table_list = $dbh->prepare("SELECT name, description, finished FROM settings  ORDER BY length(name) DESC, name DESC ");
-$table_list->execute();
 
 
-print_page_top_bootstrap('Results');
+
+print_page_top_bootstrap('Results', 1);
 
 print_heading('Results');
 print "<br/><table class='table table-striped'><tr><td colspan='4'>Results ID</td><td colspan='7'></td></tr>";
+
+
+# my $table_list = $dbh->prepare("SELECT name, description, finished FROM settings where finished = -3 or finished >= 0 ");
+# $table_list->execute();
+# my $sample_in_progress = $table_list->fetchrow_hashref;
+# 
+# if (defined $sample_in_progress->{'name'}) {
+#     print "<div class='alert alert-info'>
+#       <h4>Current Progress</h4><p>Sample $sample_in_progress->{'name'} - '$sample_in_progress->{'description'}'.</p>
+#     ";
+# 
+# my $scored = 0;
+# if ($sample_in_progress->{'finished'} > 0) {$scored = $sample_in_progress->{'finished'} * 100};
+# 
+# print '
+# <p><div class="progress progress-striped active">
+#   <div class="bar" style="width:', $scored,'%;"></div>
+# </div></p></div>', $sample_in_progress->{'start_percentage'};
+# 
+# }
+
+ print '
+ <div id="wrapper"> 
+     <div id="progressbar"></div>
+ </div>';
+
+
+my $table_list = $dbh->prepare("SELECT name, description, finished FROM settings  ORDER BY length(name) DESC, name DESC ");
+$table_list->execute();
 
 print '<form name="combined" action="view_combined.pl" method="GET">';
 
 while (my $table_name = $table_list->fetchrow_hashref) {
     my $state;
     if ($table_name->{'finished'} == -1) {
-        $state = '<span class="label label-success">Done</span>';
+        $state = "<div>". '<span class="label label-success">Done</span>';
     } elsif ($table_name->{'finished'} == -2) {
-        $state = '<span class="label">Waiting...</span>';
+        $state = "<div class='percentage' data-result='$table_name->{'name'}'>". '<span class="label">Waiting...</span>';
     } elsif ($table_name->{'finished'} == -3) {
-        $state = '<span class="label label-info">Starting...</span>';
+        $state = "<div class='percentage' data-result='$table_name->{'name'}'>". '<span class="label label-info">Starting...</span>';
     } elsif ($table_name->{'finished'} == -4) {
-        $state = '<span class="label label-warning">Aborted</span>';
+        $state = "<div>". '<span class="label label-warning">Aborted</span>';
     } elsif ($table_name->{'finished'} == -5) {
-        $state = '<span class="label label-important">Failed</span>';
+        $state = "<div>". '<span class="label label-important">Failed</span>';
     } elsif ($table_name->{'finished'} == -6) {
-        $state = '<span class="label label-info">Importing...</span>';
+        $state = "<div class='percentage' data-result='$table_name->{'name'}'>" .'<span class="label label-info">Importing...</span>';
     }
 
     else {
-        $state =  '<span class="label">' . $table_name->{'finished'} * 100 . "%</span>";
+        $state =  "<div class='percentage' data-result='$table_name->{'name'}'>" . '<span class="label">' . $table_name->{'finished'} * 100 . "%</span>";
     }
 
 print '<tr><td>';
@@ -61,7 +89,7 @@ print ' </td><td>',  $table_name->{'name'}, '</td><td><a href="rename.pl?table='
 #           $table_name->{'name'}, '">', $state, '</iframe>',
 #           ;
 #     } else {
-        print $state;
+        print "$state</div>";
 #     }
 
     print

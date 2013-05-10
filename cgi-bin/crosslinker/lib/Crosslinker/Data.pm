@@ -12,7 +12,7 @@ our @EXPORT = (
                'generate_decoy',   'set_doublets_found',  'import_mgf_doublet_query', 'connect_db_single',
                'import_scan',      'create_settings',     'set_failed',               'connect_db_results',
                'set_state',        'create_results',      'import_mzXML',             'create_peptide_table',
-               'add_peptide',	   'connect_settings'
+               'add_peptide',	   'connect_settings',    'set_progress'
 );
 
 use lib 'lib';
@@ -381,6 +381,22 @@ sub is_ready {
         $state = 0;
     }
     return $state;
+}
+
+sub set_progress {
+my ($settings_dbh, $results_table, $status, $percent) = @_;
+
+            $settings_dbh->do(
+                "CREATE TABLE IF NOT EXISTS status (
+						      run_id INTEGER NOT NULL,
+						      status TEXT,
+						      percent INTEGER,  PRIMARY KEY (run_id)
+						) "
+            );
+
+	  my $settings_sql = $settings_dbh->prepare("REPLACE INTO status (run_id, status, percent) VALUES (?,?,?)");
+	  _retry 15, sub { $settings_sql->execute($results_table, $status, $percent) };
+
 }
 
 sub save_settings {
@@ -909,6 +925,7 @@ my $pm = Parallel::ForkManager->new($threads);
         if ($percent_done != sprintf("%.2f", $peak_no / @peaklist)) {
             $percent_done = sprintf("%.2f", $peak_no / @peaklist);
             update_state($settings_dbh_fork, $results_table, $percent_done);
+	    set_progress ($settings_dbh_fork, $results_table, 'Scoring', sprintf("%.0f", $peak_no / @peaklist * 100))
         }
         my $MSn_string    = "";
         my $d2_MSn_string = "";
