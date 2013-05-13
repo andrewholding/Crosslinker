@@ -163,6 +163,13 @@ sub connect_db {
       $settings_dbh->do("create database if not exists settings");
       $settings_dbh->disconnect;
       $settings_dbh = DBI->connect("dbi:mysql:settings", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+            $settings_dbh->do(
+                "CREATE TABLE IF NOT EXISTS status (
+						      run_id INTEGER NOT NULL,
+						      status TEXT,
+						      percent INTEGER,  PRIMARY KEY (run_id)
+						) "
+            );
     }
     else {
       $dbh = DBI->connect("dbi:SQLite:dbname=:memory:", "", "", { RaiseError => 1, AutoCommit => 1 });
@@ -183,6 +190,7 @@ sub connect_settings {
       $settings_dbh->do("create database if not exists settings");
       $settings_dbh->disconnect;
       $settings_dbh = DBI->connect("dbi:mysql:settings", "root", "crosslinker", { RaiseError => 1, AutoCommit => 1 });
+
     }
     else {
       $settings_dbh = DBI->connect("dbi:SQLite:dbname=db/settings", "", "", { RaiseError => 1, AutoCommit => 1 });

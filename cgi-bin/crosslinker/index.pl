@@ -37,10 +37,15 @@ print <<ENDHTML;
   <h1>Crosslinker <small>Search</small></h1>
 </div>
   <p>The details of this software are in preparation for publication. Once published there details will be placed here.</p>
+</div>
+</div>
+<div class="span8 offset2">
 <form method="POST" enctype="multipart/form-data" action="crosslinker.pl" target="_blank">
 <fieldset>
 <legend>Settings</legend><br/>
+
 <div class="row">
+
 <div class="span4"> 
    <label>Digest</label>
     <select name="enzyme"> 
@@ -98,10 +103,11 @@ my $development = get_conf($dbh, 'development');
 my $development_setting = $development->fetchrow_hashref();
 
 if ( $development_setting->{'setting1'} == 1) {
-    print '<legend>Non-Specific Enzymes</legend><div class="row">';
-    print '<div class="span4">
-
-<label>Digest Type<label>
+    print '
+<div class="row">
+<div class="span4">
+<legend>Non-Specific Enzymes</legend>
+<label>Digest Type</label>
   <select name="non_specific_digest"> 
 <option value="0" selected="true">Off</option>
 <option value="1">No Enzyme</option>
@@ -229,7 +235,7 @@ print <<ENDHTML;
     <label class="span2 checkbox" ><input type="checkbox" name="bions" checked="checked"  value="1"/> B-ions</label>
     <label class="span2 checkbox" ><input type="checkbox" name="yions" checked="checked"  value="1"/> Y-ions</label>
     <label class="span2 checkbox" ><input type="checkbox" name="waterloss" checked="checked" value="1">Water Loss</label>
-    <label class="span2 checkbox" ><input type="checkbox" name="ammonialoss"checked="checked" value="1"> Ammonia Loss</label>
+    <label class="span2 checkbox" ><input type="checkbox" name="ammonialoss" checked="checked" value="1"> Ammonia Loss</label>
 </div>
    
 <div class="span2 offset1">
@@ -309,9 +315,9 @@ function clearFileInputField(tagId) {
                          href="javascript:noAction();">Clear</a>
 
 </div>
+</div> 
 </fieldset> 
 </form> 
-</div> 
 </div> 
  
 ENDHTML

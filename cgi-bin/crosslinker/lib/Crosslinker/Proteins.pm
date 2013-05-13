@@ -615,7 +615,7 @@ sub calculate_amber_crosslink_peptides {
 	$protein_residuemass_ref
     ) = @_;
 
-    my $amber_peptide = substr($amber_peptide, 0, index($amber_peptide, ','));
+    $amber_peptide = substr($amber_peptide, 0, index($amber_peptide, ','));
 
     my $xlink;
     my $xlink_fragment_mass;

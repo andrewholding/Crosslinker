@@ -858,7 +858,7 @@ Content-type: text/html\n\n
 		color:#fff;
 	}
 </style>
-    </style> 
+
     <link href="/$path/bootstrap/css/bootstrap-responsive.css" rel="stylesheet"> 
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements --> 
     <!--[if lt IE 9]>
@@ -867,7 +867,7 @@ Content-type: text/html\n\n
 
 ENDHTML
 
-if ($ajax = 1) {
+if (defined($ajax) and $ajax == 1) {
 print '<script>
 (function($)
 {
