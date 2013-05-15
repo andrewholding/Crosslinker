@@ -796,8 +796,8 @@ sub print_results {
 
 	    if ($top_hits_results->{'sequence1_name'} =~ />..\|(......)\|/  )
 	      {
-		 print "$modifications{$top_hits_results->{'modification'}}{Name}</td><td>",
-                 $1;
+		 print "$modifications{$top_hits_results->{'modification'}}{Name}</td><td>";
+		 print "<a href='http://www.uniprot.org/uniprot/$1'>$1</a>";
 	      } else
 	      {
             print " $modifications{$top_hits_results->{'modification'}}{Name}</td><td>",
@@ -806,7 +806,7 @@ sub print_results {
             if ($top_hits_results->{'fragment'} =~ '-') {
 	      if ($top_hits_results->{'sequence2_name'} =~ />..\|(......)\|/  )
 	      {
-		 print "&#8209;",    $1;
+		 print "&#8209;<a href='http://www.uniprot.org/uniprot/$1'>$1</a>";
 	      } else
 	      {
                 print " - ", substr($top_hits_results->{'sequence2_name'}, 1);
