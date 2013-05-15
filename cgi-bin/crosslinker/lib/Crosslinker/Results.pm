@@ -793,10 +793,24 @@ sub print_results {
             if ($top_hits_results->{'no_of_mods'} > 1) {
                 print "$top_hits_results->{'no_of_mods'} x";
             }
+
+	    if ($top_hits_results->{'sequence1_name'} =~ />..\|(......)\|/  )
+	      {
+		 print "$modifications{$top_hits_results->{'modification'}}{Name}</td><td>",
+                 $1;
+	      } else
+	      {
             print " $modifications{$top_hits_results->{'modification'}}{Name}</td><td>",
               substr($top_hits_results->{'sequence1_name'}, 1);
+	      }
             if ($top_hits_results->{'fragment'} =~ '-') {
+	      if ($top_hits_results->{'sequence2_name'} =~ />..\|(......)\|/  )
+	      {
+		 print "&#8209;",    $1;
+	      } else
+	      {
                 print " - ", substr($top_hits_results->{'sequence2_name'}, 1);
+	      }
             }
             print "</td><td> $top_hits_results->{'fraction'}</td><td>";
             if ($top_hits_results->{'scan'} == '-1') {
