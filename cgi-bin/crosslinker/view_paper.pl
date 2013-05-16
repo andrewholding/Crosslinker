@@ -111,7 +111,7 @@ sub print_results_paper {
     if ($no_tables == 0) {
         print
 '<br/><div class="row"><div class="span12"><table class="table table-striped"><tr><td></td><td>Chain 1</td><td>Chain 2</td><td>Position1</td><td>Position2</td><td>Fragment&nbsp;and&nbsp;Position</td><td>Score</td>';
-      if ($decoy == 1 ) {print '<td>FDR</td>'};
+      if (defined $decoy  ) {print '<td>FDR</td>'};
       print '<td>Mass</td><td>Charge<td>PPM</td></td></td><td>Mod</td></tr>';
     }
 
@@ -212,7 +212,7 @@ sub print_results_paper {
             }
             print
 "<td>$top_hits_results->{'score'}</td>";
-	    if ($decoy == 1 ) {print "<td>"; printf( "%.2f", $top_hits_results->{'FDR'}*100); print"&nbsp;%</td>"};
+	    if (defined $decoy ) {print "<td>"; printf( "%.2f", $top_hits_results->{'FDR'}*100); print"&nbsp;%</td>"};
 	    print "<td>$top_hits_results->{'mz'}</td><td>$top_hits_results->{'charge'}+</td><td>$rounded</td>";
             print "<td>";
             if ($top_hits_results->{'no_of_mods'} > 1) {
