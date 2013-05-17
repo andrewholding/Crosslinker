@@ -185,6 +185,9 @@ sub generate_page {
                                     $no_xlink_at_cut_site, $fast_mode,		$amber_codon
     );
 
+    if (defined $decoy) 
+    {
+
           if (is_verbose == 1 ) {warn "Run $results_table: Calculating Peptide FDR...\n";};
 
 
@@ -225,6 +228,7 @@ sub generate_page {
     $update_db->execute($fdr_decoy/($fdr_decoy+$fdr_non_decoy),$results->{'mz'},$results->{'fragment'},$results->{'scan'});
     }
 
+    }
 
 
 

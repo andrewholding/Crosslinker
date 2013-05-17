@@ -189,7 +189,7 @@ if ($child) {
             @fixed_mods        = @{$fixed_mods_ref};
             %ms2_fragmentation = %{$ms2_fragmentation_ref};
 
-            warn "Run ", $results_table, ":$cut_residues";
+#             warn "Run ", $results_table, ":$cut_residues";
 
             $results_dbh->disconnect();
             $results_table = $next_run;
