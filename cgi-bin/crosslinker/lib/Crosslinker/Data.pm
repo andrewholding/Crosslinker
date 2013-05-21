@@ -459,7 +459,7 @@ sub update_settings {
 
     _retry 15, sub {
         $settings_sql->execute(
-                               $desc,           $cut_residues,    $protien_sequences, $reactive_site,
+			      $cut_residues,    $protien_sequences, $reactive_site,
                                $mono_mass_diff, $xlinker_mass,    $decoy,             $ms2_da,
                                $ms1_ppm,        $state,           $mass_seperation,   $threshold,
                                $match_charge,   $match_intensity, $scored_ions,       $amber_codon,
@@ -535,7 +535,14 @@ sub save_settings {
     } else {
       $results_table = $settings_dbh->func('last_insert_rowid');
     }
-    
+
+
+    if ($use_previous_settings > 0) {
+	    my $settings_sql = $settings_dbh->prepare(
+		" insert into modifications (run_id, mod_id, mod_name, mod_mass, mod_residue, mod_type) select ?, mod_id, mod_name, mod_mass, mod_residue, mod_type from modifications where run_id = ?;"
+	    );
+	    $settings_sql->execute($results_table, $use_previous_settings); 
+    } else { 
     if (defined $fixed_mods_ref) {
         my $conf_dbh = connect_conf_db;
         _retry 15, sub {
@@ -550,29 +557,31 @@ sub save_settings {
 						) "
             );
         };
-        my $settings_sql = $settings_dbh->prepare(
-            "INSERT INTO modifications 
-						(
-						      run_id,
-						      mod_id,
-						      mod_name,
-						      mod_mass,
-						      mod_residue,
-						      mod_type
-						) VALUES (?,?,?,?,?,?)"
-        );
-        my @fixed_mods = @{$fixed_mods_ref};
-        foreach my $mod (@fixed_mods) {
-            my $fixed_mod = get_conf_value($conf_dbh, $mod);
-            my $fixed_mod_data = $fixed_mod->fetchrow_hashref();
-            _retry 15, sub {
-                $settings_sql->execute($results_table, $mod,
-                                       $fixed_mod_data->{'name'},
-                                       $fixed_mod_data->{'setting1'},
-                                       $fixed_mod_data->{'setting2'}, 'fixed');
-            };
-            $fixed_mod->finish;
-        }
+
+	    my $settings_sql = $settings_dbh->prepare(
+		"INSERT INTO modifications 
+						    (
+							  run_id,
+							  mod_id,
+							  mod_name,
+							  mod_mass,
+							  mod_residue,
+							  mod_type
+						    ) VALUES (?,?,?,?,?,?)"
+	    );
+	    my @fixed_mods = @{$fixed_mods_ref};
+	    foreach my $mod (@fixed_mods) {
+		my $fixed_mod = get_conf_value($conf_dbh, $mod);
+		my $fixed_mod_data = $fixed_mod->fetchrow_hashref();
+		_retry 15, sub {
+		    $settings_sql->execute($results_table, $mod,
+					  $fixed_mod_data->{'name'},
+					  $fixed_mod_data->{'setting1'},
+					  $fixed_mod_data->{'setting2'}, 'fixed');
+		};
+		$fixed_mod->finish;
+		}
+     
         $conf_dbh->disconnect();
     }
 
@@ -616,6 +625,7 @@ sub save_settings {
             $dynamic_mod->finish;
         }
         $conf_dbh->disconnect();
+    }
     }
 
     return $results_table;
