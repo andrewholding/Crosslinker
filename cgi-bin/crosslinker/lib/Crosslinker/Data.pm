@@ -429,7 +429,6 @@ sub update_settings {
     my $settings_sql = $settings_dbh->prepare(
         "UPDATE settings SET
 						
-						      description=?,
 						      cut_residues=?,
 						      protein_sequences=?,
 						      reactive_site=?,

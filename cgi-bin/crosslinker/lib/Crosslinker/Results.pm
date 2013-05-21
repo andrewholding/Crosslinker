@@ -635,14 +635,14 @@ sub print_results {
         $xlink_mono_or_all, $decoy,             $no_links,          $settings_dbh
     ) = @_;
 
-    if (!defined $max_hits)          { $max_hits          = 0 }
-    if (!defined $no_links)          { $no_links          = 0 }      #Tells us we are in single scan mode.
-    if (!defined $xlink_mono_or_all) { $xlink_mono_or_all = 0 }
-    if (!$repeats)                   { $repeats           = 0 }
-    if (!$no_tables)                 { $no_tables         = 0 }
-    if (!defined $monolink)          { $monolink          = 0 }
-    if (!defined $decoy)             { $decoy             = 'No' }
-    if ($decoy eq 'true') { $decoy = 'Yes' }
+    if (!defined $max_hits)       			{ $max_hits          = 0 }
+    if (!defined $no_links || $no_links eq '')          { $no_links          = 0 }      #Tells us we are in single scan mode.
+    if (!defined $xlink_mono_or_all) 			{ $xlink_mono_or_all = 0 }
+    if (!$repeats)                   			{ $repeats           = 0 }
+    if (!$no_tables)                 			{ $no_tables         = 0 }
+    if (!defined $monolink || $monolink eq '')          { $monolink          = 0 }
+    if (!defined $decoy)             			{ $decoy             = 'No' }
+    if ($decoy eq 'true') 				{ $decoy = 'Yes' }
 
     # warn $decoy;
 
