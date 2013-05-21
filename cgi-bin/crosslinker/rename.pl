@@ -45,7 +45,7 @@ if (defined $new_name) {
     print "<p><form style='margin:1em 1em 1em 4em;'>
 	<input type='hidden' name='table' value='" . $table . "'/>
 	New name: <input type='text' name='name' value='"
-      . $table_name->{'desc'} . "' />
+      . $table_name->{'description'} . "' />
        <input type='submit' value='Submit'></form></p>"
 }
 print_page_bottom_bootstrap;
