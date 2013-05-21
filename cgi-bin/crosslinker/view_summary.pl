@@ -75,6 +75,7 @@ my (
     
 ) = $settings->fetchrow_array;
 
+if (!defined $doublets_found) {$doublets_found = 0};
 
 $settings->finish();
 
