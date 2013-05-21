@@ -20,13 +20,15 @@ sub amino_peptidase_digest {
 
 my ($min_length, $max_length, $reactive_site, $sequence) = @_;
 
+
 my @peptides;
 
+$reactive_site = substr('K',1,2);
 
 for (my $i=$min_length; $i < $max_length;  $i++) {
 while ($sequence =~ m/((?=(.{$i})$reactive_site([^KR]*[KR])))/g) {
     push @peptides, "$2$reactive_site$3";
-#     warn "$1 $reactive_site $2"
+
 }
 }
 
