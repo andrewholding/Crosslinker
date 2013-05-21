@@ -622,7 +622,7 @@ sub calc_score {
             for (my $n = 0 ; $n < @residues - $no_xlink_at_cut_site ; $n++) {
 
 
-# 		warn $xlink_residues[$i], " ", $residues[$n], " ",$xlink_residues[$i] =~ /$residues[$n]/;
+#  		warn $xlink_residues[$i], " ", $residues[$n], " ",$xlink_residues[$i] =~ /$residues[$n]/;
                 if ( $xlink_residues[$i] =~ /$residues[$n]/) {
                     push @tmp, $n
 

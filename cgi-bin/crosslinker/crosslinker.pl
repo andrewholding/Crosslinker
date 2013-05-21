@@ -59,6 +59,9 @@ if ($child) {
     # Connect to databases
     my ($dbh, $settings_dbh) = connect_db;
 
+
+
+
     my (
         $protien_sequences,     $sequence_names_ref, $missed_clevages,   $upload_filehandle_ref,
         $csv_filehandle_ref,    $reactive_site,      $cut_residues,      $nocut_residues,
@@ -68,7 +71,7 @@ if ($child) {
         $ms2_fragmentation_ref, $threshold,          $n_or_c,            $scan_width,
         $match_charge,          $match_intensity,    $scored_ions,       $no_xlink_at_cut_site,
         $ms1_intensity_ratio,   $fast_mode,          $doublet_tolerance, $upload_format,
-	$amber_codon,		$non_specific_digest,	     $no_enzyme_min,	 $no_enzyme_max
+	$amber_codon,		$non_specific_digest,	     $no_enzyme_min,	 $no_enzyme_max, $use_previous_settings
     ) = import_cgi_query($query, $mass_of_deuterium, $mass_of_hydrogen, $mass_of_carbon13, $mass_of_carbon12);
     my @sequence_names    = @{$sequence_names_ref};
     my @upload_filehandle = @{$upload_filehandle_ref};
@@ -83,7 +86,7 @@ if ($child) {
         $cut_residues, $fasta,     $reactive_site, $mono_mass_diff,  $xlinker_mass,    -6,
         $desc,         $decoy,     $ms2_error,     $match_ppm,       $mass_seperation, \@dynamic_mods,
         \@fixed_mods,  $threshold, $match_charge,  $match_intensity, $scored_ions,	$amber_codon,
-        $non_specific_digest, $no_enzyme_min,	 $no_enzyme_max
+        $non_specific_digest, $no_enzyme_min,	 $no_enzyme_max, 0 ,$use_previous_settings
     );
 
     my ($results_dbh) = connect_db_results($results_table, 0);
@@ -127,6 +130,39 @@ if ($child) {
 
     while ($next_run != 0) {
 
+     if ($use_previous_settings != 0) {
+        open(OUT, '<', "query_data/query-$use_previous_settings.txt") or die "could not open query_data/query-$use_previous_settings.txt" ;
+        $query = CGI->new(\*OUT);
+        close OUT;
+	(
+             $protien_sequences,     $sequence_names_ref, $missed_clevages,   $upload_filehandle_ref,
+             $csv_filehandle_ref,    $reactive_site,      $cut_residues,      $nocut_residues,
+             $fasta,                 $desc,               $decoy,             $match_ppm,
+             $ms2_error,             $mass_seperation,    $isotope,           $seperation,
+             $mono_mass_diff,        $xlinker_mass,       $dynamic_mods_ref,  $fixed_mods_ref,
+             $ms2_fragmentation_ref, $threshold,          $n_or_c,            $scan_width,
+             $match_charge,          $match_intensity,    $scored_ions,       $no_xlink_at_cut_site,
+             $ms1_intensity_ratio,   $fast_mode,          $doublet_tolerance, $upload_format,
+	     $amber_codon,	     $non_specific_digest,	  $no_enzyme_min,	 $no_enzyme_max
+            ) = import_cgi_query($query, $mass_of_deuterium, $mass_of_hydrogen, $mass_of_carbon13, $mass_of_carbon12);
+            @sequence_names    = @{$sequence_names_ref};
+            @upload_filehandle = @{$upload_filehandle_ref};
+            @csv_filehandle    = @{$csv_filehandle_ref};
+            @dynamic_mods      = @{$dynamic_mods_ref};
+            @fixed_mods        = @{$fixed_mods_ref};
+            %ms2_fragmentation = %{$ms2_fragmentation_ref};
+
+	    update_settings(
+		    $settings_dbh, $results_table,
+
+		    $cut_residues, $fasta,     $reactive_site, $mono_mass_diff,  $xlinker_mass,    -6,
+		    $desc,         $decoy,     $ms2_error,     $match_ppm,       $mass_seperation, \@dynamic_mods,
+		    \@fixed_mods,  $threshold, $match_charge,  $match_intensity, $scored_ions,	$amber_codon,
+		    $non_specific_digest, $no_enzyme_min,	 $no_enzyme_max
+		);
+
+      }
+
         # Setup Modifications
         my %protein_residuemass = protein_residuemass($results_table, $settings_dbh);
         my %modifications =
@@ -150,7 +186,7 @@ if ($child) {
                                    $match_intensity,    $no_xlink_at_cut_site, $ms1_intensity_ratio,
                                    $fast_mode,          $doublet_tolerance,    $amber_codon,
 				   $non_specific_digest,	$no_enzyme_min,	       $no_enzyme_max,
-			           $decoy
+			           $decoy     	,$use_previous_settings
             );
         };
 
@@ -180,7 +216,7 @@ if ($child) {
              $ms2_fragmentation_ref, $threshold,          $n_or_c,            $scan_width,
              $match_charge,          $match_intensity,    $scored_ions,       $no_xlink_at_cut_site,
              $ms1_intensity_ratio,   $fast_mode,          $doublet_tolerance, $upload_format,
-	     $amber_codon,	     $non_specific_digest,	  $no_enzyme_min,	 $no_enzyme_max
+	     $amber_codon,	     $non_specific_digest,	  $no_enzyme_min,	 $no_enzyme_max, $use_previous_settings
             ) = import_cgi_query($query, $mass_of_deuterium, $mass_of_hydrogen, $mass_of_carbon13, $mass_of_carbon12);
             @sequence_names    = @{$sequence_names_ref};
             @upload_filehandle = @{$upload_filehandle_ref};

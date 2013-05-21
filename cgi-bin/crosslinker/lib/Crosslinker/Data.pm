@@ -12,7 +12,7 @@ our @EXPORT = (
                'generate_decoy',   'set_doublets_found',  'import_mgf_doublet_query', 'connect_db_single',
                'import_scan',      'create_settings',     'set_failed',               'connect_db_results',
                'set_state',        'create_results',      'import_mzXML',             'create_peptide_table',
-               'add_peptide',	   'connect_settings',    'set_progress'
+               'add_peptide',	   'connect_settings',    'set_progress',	      'update_settings'
 );
 
 use lib 'lib';
@@ -241,7 +241,8 @@ sub create_settings {
 						      time TEXT,
 						      non_specific_digest NUMERIC,
 						      no_enzyme_min TEXT,
-						      no_enzyme_max TEXT
+						      no_enzyme_max TEXT,		
+						      use_previous INTEGER
 						) "
         );
     };
@@ -407,10 +408,10 @@ my ($settings_dbh, $results_table, $status, $percent) = @_;
 
 }
 
-sub save_settings {
+sub update_settings {
 
-    my (
-        $settings_dbh, $cut_residues,    $protien_sequences, $reactive_site,  $mono_mass_diff,
+   my (
+        $settings_dbh, $results_table, $cut_residues,    $protien_sequences, $reactive_site,  $mono_mass_diff,
         $xlinker_mass, $state,           $desc,              $decoy,          $ms2_da,
         $ms1_ppm,      $mass_seperation, $dynamic_mods_ref,  $fixed_mods_ref, $threshold,
         $match_charge, $match_intensity, $scored_ions, $amber_codon ,
@@ -421,6 +422,68 @@ sub save_settings {
     if (!defined $amber_codon) {$amber_codon = 0;};
     if (!defined $single) { $single = 0};
 
+
+
+    create_settings($settings_dbh, $single);
+
+    my $settings_sql = $settings_dbh->prepare(
+        "UPDATE settings SET
+						
+						      description=?,
+						      cut_residues=?,
+						      protein_sequences=?,
+						      reactive_site=?,
+						      mono_mass_diff=?,
+						      xlinker_mass=?,
+						      decoy=?,
+						      ms2_da=?,
+						      ms1_ppm=?,
+						      finished=?,
+						      isotoptic_shift=?,	     
+						      threshold=?,
+						      charge_match=?,
+						      intensity_match=?,
+						      scored_ions=?,
+						      amber=?,
+						      time=?,
+						      non_specific_digest=?,
+						      no_enzyme_min=?,
+						      no_enzyme_max=?
+						 
+			      WHERE name = ?"
+    );
+
+    if   ($match_charge == '1') { $match_charge = 'Yes' }
+    else                        { $match_charge = 'No' }
+    if   ($match_intensity == '1') { $match_intensity = 'Yes' }
+    else                           { $match_intensity = 'No' }
+
+    _retry 15, sub {
+        $settings_sql->execute(
+                               $desc,           $cut_residues,    $protien_sequences, $reactive_site,
+                               $mono_mass_diff, $xlinker_mass,    $decoy,             $ms2_da,
+                               $ms1_ppm,        $state,           $mass_seperation,   $threshold,
+                               $match_charge,   $match_intensity, $scored_ions,       $amber_codon,
+				time,       	$non_specific_digest, 	  $no_enzyme_min,     $no_enzyme_max,
+			       $results_table
+        );
+    };
+
+}
+
+sub save_settings {
+
+    my (
+        $settings_dbh, $cut_residues,    $protien_sequences, $reactive_site,  $mono_mass_diff,
+        $xlinker_mass, $state,           $desc,              $decoy,          $ms2_da,
+        $ms1_ppm,      $mass_seperation, $dynamic_mods_ref,  $fixed_mods_ref, $threshold,
+        $match_charge, $match_intensity, $scored_ions, $amber_codon ,
+        $non_specific_digest, $no_enzyme_min, $no_enzyme_max, $single, $use_previous_settings
+    ) = @_;
+
+
+    if (!defined $amber_codon) {$amber_codon = 0;};
+    if (!defined $single) { $single = 0};
 
 
     create_settings($settings_dbh, $single);
@@ -447,8 +510,9 @@ sub save_settings {
 						      time,
 						      non_specific_digest,
 						      no_enzyme_min,
-						      no_enzyme_max
-						 ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+						      no_enzyme_max,		
+						      use_previous
+						 ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
     );
 
     if   ($match_charge == '1') { $match_charge = 'Yes' }
@@ -462,7 +526,7 @@ sub save_settings {
                                $mono_mass_diff, $xlinker_mass,    $decoy,             $ms2_da,
                                $ms1_ppm,        $state,           $mass_seperation,   $threshold,
                                $match_charge,   $match_intensity, $scored_ions,       $amber_codon,
-				time,       	$non_specific_digest, 	  $no_enzyme_min,     $no_enzyme_max
+				time,       	$non_specific_digest, 	  $no_enzyme_min,     $no_enzyme_max, $use_previous_settings
         );
     };
 
@@ -649,7 +713,9 @@ sub import_cgi_query {
     }
 
 
+    my $use_previous_settings = 0;
 
+    if (defined $query->param('use_previous')){ $use_previous_settings = $query->param('use_previous') };
     my $doublet_tolerance    = $query->param("ms_ppm");
     my $threshold            = $query->param('threshold');
     my $match_charge         = 0;
@@ -748,6 +814,8 @@ sub import_cgi_query {
         $mass_seperation = $linkspacing * ($mass_of_carbon13 - $mass_of_carbon12);
     }
 
+
+
     $conf_dbh->disconnect();
     return (
             $protien_sequences,   \@sequence_names, $missed_clevages,   \@upload_filehandle,
@@ -758,7 +826,7 @@ sub import_cgi_query {
             \%ms2_fragmentation,  $threshold,       $n_or_c,            $scan_width,
             $match_charge,        $match_intensity, $scored_ions,       $no_xlink_at_cut_site,
             $ms1_intensity_ratio, $fast_mode,       $doublet_tolerance, $upload_format, $amber_codon, $non_specific_digest,
-	    $no_enzyme_min,	 $no_enzyme_max
+	    $no_enzyme_min,	 $no_enzyme_max, $use_previous_settings
     );
 }
 
@@ -842,7 +910,7 @@ sub matchpeaks {
         $nocut_residues,       $sequence_names_ref,      $mono_mass_diff,        $xlinker_mass,
         $linkspacing,          $isotope,                 $reactive_site,         $modifications_ref,
         $ms2_error,            $protein_residuemass_ref, $ms2_fragmentation_ref, $threshold,
-        $no_xlink_at_cut_site, $fast_mode,		 $amber_codon
+        $no_xlink_at_cut_site, $fast_mode,		 $amber_codon,	  	 $use_previous_settings
     ) = @_;
 
     #    my %fragment_masses     = %{$fragment_masses_ref};
@@ -922,6 +990,12 @@ my $pm = Parallel::ForkManager->new($threads);
               
 	my $settings_dbh_fork = connect_settings();
 	my $results_dbh_fork = connect_db_results($results_table);
+	my $results_search_dbh_fork;
+
+	if ($use_previous_settings != 0) 
+	  {
+	      $results_search_dbh_fork = connect_db_results($use_previous_settings);
+	  }
 
         if (check_state($settings_dbh_fork, $results_table) == -4) {
             return %fragment_score;
@@ -985,8 +1059,17 @@ my $pm = Parallel::ForkManager->new($threads);
 						      )VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
     );
 
-	my $peptides = $results_dbh_fork->prepare("select * from peptides where results_table = ? AND (xlink = 1 or monolink <> 0) and mass between ? and ?");
-        $peptides->execute( $results_table,  $peak->{monoisotopic_mw} / $max_delta , $peak->{monoisotopic_mw} *$max_delta );
+	my $peptides;
+	if ($use_previous_settings == 0) 
+	  {
+	     $peptides = $results_dbh_fork->prepare("select * from peptides where results_table = ? AND (xlink = 1 or monolink <> 0) and mass between ? and ?");
+	     $peptides->execute( $results_table,  $peak->{monoisotopic_mw} / $max_delta , $peak->{monoisotopic_mw} *$max_delta );
+	  } else {
+	     $peptides = $results_search_dbh_fork->prepare("select * from peptides where results_table = ? AND (xlink = 1 or monolink <> 0) and mass between ? and ?");
+	     $peptides->execute( $use_previous_settings,  $peak->{monoisotopic_mw} / $max_delta , $peak->{monoisotopic_mw} *$max_delta );
+	  }
+ 
+      
 
         while (my $peptide = $peptides->fetchrow_hashref) {
             my $fragment = $peptide->{'sequence'};
@@ -1039,6 +1122,8 @@ my $pm = Parallel::ForkManager->new($threads);
                                     }
 
 				    my $n = $peptide->{'no_of_mods'};
+
+
 
                                     my (
                                         $ms2_score,          $modified_fragment,    $best_x,

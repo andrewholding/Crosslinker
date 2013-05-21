@@ -6,7 +6,7 @@ use lib 'lib';
 use Crosslinker::UserSettings;
 
 use base 'Exporter';
-our @EXPORT = ('get_mods', 'get_conf_value', 'connect_conf_db', 'add_conf', 'get_conf', 'delete_conf', 'update_conf');
+our @EXPORT = ('get_mods', 'get_conf_value', 'connect_conf_db', 'add_conf', 'get_conf', 'delete_conf', 'update_conf', 'get_runs');
 
 
 
@@ -48,6 +48,15 @@ sub get_conf {
     return $sql;
 
 }
+
+sub get_runs {
+    my ($dbh) = @_;
+    my $sql = $dbh->prepare("SELECT * FROM settings WHERE use_previous = 0");
+    _retry 15, sub { $sql->execute() };
+    return $sql;
+
+}
+
 
 sub get_conf_value {
     my ($dbh, $rowid) = @_;

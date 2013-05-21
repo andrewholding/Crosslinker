@@ -537,7 +537,7 @@ sub calculate_crosslink_peptides {
 
 
     while (my $source = $sequencelist->fetchrow_hashref) {
-      if (is_verbose == 1 ) {warn "Run $results_table:Crosslinking peptides  ... ", sprintf("%.0f", ($count / $rows) *100) , "%\n"};
+      if (is_verbose == 1 ) {warn "Run $results_table: Crosslinking peptides  ... ", sprintf("%.0f", ($count / $rows) *100) , "%\n"};
       Crosslinker::Data::set_progress ($settings_dbh, $results_table, 'Crosslinking peptides ', sprintf("%.0f", ($count / $rows) *100));
       $count++;
       $pm->start and next;

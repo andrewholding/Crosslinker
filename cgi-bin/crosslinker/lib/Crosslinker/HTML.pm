@@ -45,10 +45,9 @@ sub generate_page {
         $state,              $ms2_fragmentation_ref, $threshold,             $n_or_c,
         $match_charge,       $match_intensity,       $no_xlink_at_cut_site,  $ms1_intensity_ratio,
         $fast_mode,          $doublet_tolerance,     $amber_codon,	     $non_specific_digest,
-	$no_enzyme_min,	     $no_enzyme_max,	     $decoy
+	$no_enzyme_min,	     $no_enzyme_max,	     $decoy,		     $use_previous_settings
     ) = @_;
 
-    #     die;
 
     my %protein_residuemass = %{$protein_residuemass_ref};
     my @csv_filehandle      = @{$csv_filehandle_ref};
@@ -58,108 +57,85 @@ sub generate_page {
     my %ms2_fragmentation   = %{$ms2_fragmentation_ref};
 
      my $fragment;
-#     my @fragments;
-#     my @fragments_linear_only;
     my %fragment_source;
     my %fragment_source_linear_only;
     my @sequence_fragments;
     my @sequences = split '>', $protien_sequences;
     my $count = 0;
+    if ($reactive_site =~ /[^,]/) {  $reactive_site = $reactive_site . ',' . $reactive_site};
 
     if (is_verbose == 1 ) { warn "Run $results_table: Generating page \n"} ;
 
     set_progress ($settings_dbh, $results_table, 'Starting', '0');
-
     update_state($settings_dbh, $results_table, -3);
 
-    create_peptide_table($results_dbh);
-
-    foreach my $sequence (@sequences) {
-
-	my $sequence_fragments_ref;		
-	my $sequence_fragments_linear_only_ref;
-	my @sequence_fragments;
-	my @sequence_fragments_linear_only;
-
-
-        if ($non_specific_digest == 0) {
-	  ($sequence_fragments_ref, $sequence_fragments_linear_only_ref) =
-          digest_proteins($missed_clevages, $sequence, $cut_residues, $nocut_residues, $n_or_c);
-	  @sequence_fragments             = @{$sequence_fragments_ref};
-	  @sequence_fragments_linear_only = @{$sequence_fragments_linear_only_ref};
-	} elsif ($non_specific_digest == 2) {
-	    ($sequence_fragments_ref) = amino_peptidase_digest($no_enzyme_min, $no_enzyme_max, $reactive_site, $sequence);
-	    @sequence_fragments             = @{$sequence_fragments_ref};
-	} else {
-	    ($sequence_fragments_ref) = no_enzyme_digest_proteins($no_enzyme_min, $no_enzyme_max, $reactive_site, $sequence);
-	    @sequence_fragments             = @{$sequence_fragments_ref};
-	}
-
-#         @fragments             = (@fragments,             @sequence_fragments);
-#         @fragments_linear_only = (@fragments_linear_only, @sequence_fragments_linear_only);
-              if (is_verbose == 1 ) {warn "Run $results_table: Sequence $count = $sequence_names[$count] \n";};
-              if (is_verbose == 1 ) {warn "Run $results_table: Digested peptides:", scalar(@sequence_fragments), " \n";};
-
-        foreach $fragment (@sequence_fragments)
-
-        {
-            add_peptide($results_dbh, $results_table, $fragment, $count, 0, 0, '', 0, 0);
-        }   
-
-        foreach $fragment (@sequence_fragments_linear_only) {
-            add_peptide($results_dbh, $results_table, $fragment, $count, 1, 0, '', 0, 0);
-        }
-
-        $count++;
-    }
-
-#      return '-1';
-
-          if (is_verbose == 1 ) { warn "Run $results_table: Calulating masses...  \n";};
-
-    $results_dbh->disconnect;
-#     ($results_dbh) = connect_db_results($results_table, 0);
-
-    calculate_peptide_masses($results_table, \%protein_residuemass, \%fragment_source);
-
-#     $results_dbh->commit;
-
-          if (is_verbose == 1 ) { warn "Run $results_table: Crosslinking peptides...  \n";};
-
     
+    if ($use_previous_settings == 0) {
+      create_peptide_table($results_dbh);
+      foreach my $sequence (@sequences) {
 
-#     $results_dbh->disconnect;
-    
+	  my $sequence_fragments_ref;		
+	  my $sequence_fragments_linear_only_ref;
+	  my @sequence_fragments;
+	  my @sequence_fragments_linear_only;
 
-    if ($reactive_site =~ /[^,]/) {  $reactive_site = $reactive_site . ',' . $reactive_site};
+	  if ($non_specific_digest == 0) {
+	    ($sequence_fragments_ref, $sequence_fragments_linear_only_ref) =
+	    digest_proteins($missed_clevages, $sequence, $cut_residues, $nocut_residues, $n_or_c);
+	    @sequence_fragments             = @{$sequence_fragments_ref};
+	    @sequence_fragments_linear_only = @{$sequence_fragments_linear_only_ref};
+	  } elsif ($non_specific_digest == 2) {
+	      ($sequence_fragments_ref) = amino_peptidase_digest($no_enzyme_min, $no_enzyme_max, $reactive_site, $sequence);
+	      @sequence_fragments             = @{$sequence_fragments_ref};
+	  } else {
+	      ($sequence_fragments_ref) = no_enzyme_digest_proteins($no_enzyme_min, $no_enzyme_max, $reactive_site, $sequence);
+	      @sequence_fragments             = @{$sequence_fragments_ref};
+	  }
 
+	  if (is_verbose == 1 ) {warn "Run $results_table: Sequence $count = $sequence_names[$count] \n";};
+	  if (is_verbose == 1 ) {warn "Run $results_table: Digested peptides:", scalar(@sequence_fragments), " \n";};
 
-    if ($amber_codon == 0) {
-      calculate_crosslink_peptides( $results_table,   $reactive_site, $min_peptide_length,
-				   $xlinker_mass, $missed_clevages, $cut_residues);
-    } else {
-      ($results_dbh) = connect_db_results($results_table, 0);
-      calculate_amber_crosslink_peptides($results_dbh,  $results_table,   $reactive_site, $min_peptide_length,
-					  $xlinker_mass, $missed_clevages, $cut_residues, $mono_mass_diff, \%protein_residuemass);
-      $results_dbh->commit;
+	  foreach $fragment (@sequence_fragments)
+
+	  {
+	      add_peptide($results_dbh, $results_table, $fragment, $count, 0, 0, '', 0, 0);
+	  }   
+
+	  foreach $fragment (@sequence_fragments_linear_only) {
+	      add_peptide($results_dbh, $results_table, $fragment, $count, 1, 0, '', 0, 0);
+	  }
+
+	  $count++;
+      }
+
+      if (is_verbose == 1 ) { warn "Run $results_table: Calulating masses...  \n";};
       $results_dbh->disconnect;
-      ($results_dbh) = connect_db_results($results_table);
-      
+      calculate_peptide_masses($results_table, \%protein_residuemass, \%fragment_source);
 
+      if (is_verbose == 1 ) { warn "Run $results_table: Crosslinking peptides...  \n";};
+
+      if ($amber_codon == 0) {
+	calculate_crosslink_peptides( $results_table,   $reactive_site, $min_peptide_length,
+				    $xlinker_mass, $missed_clevages, $cut_residues);
+      } else {
+	($results_dbh) = connect_db_results($results_table, 0);
+	calculate_amber_crosslink_peptides($results_dbh,  $results_table,   $reactive_site, $min_peptide_length,
+					    $xlinker_mass, $missed_clevages, $cut_residues, $mono_mass_diff, \%protein_residuemass);
+	$results_dbh->commit;
+	$results_dbh->disconnect;
+	($results_dbh) = connect_db_results($results_table);      
+      }
+
+      if ($amber_codon == 0) {
+	  if (is_verbose == 1 ) {warn "Run $results_table: Generating Monolinks... \n";};
+	  generate_monolink_peptides($results_dbh,  $results_table,   $reactive_site, $mono_mass_diff);
+      }
+
+      if ( is_verbose == 1 ) {warn "Run $results_table: Generating Modifications... \n";};
+      generate_modified_peptides($results_dbh,  $results_table,   \%modifications);
     }
 
-#     $results_dbh->do("delete from peptides where rowid not in (select  min(rowid) from peptides group by sequence)");
-	    #Remove any duplicates
 
-
-    
-    if ($amber_codon == 0) {
-	      if (is_verbose == 1 ) {warn "Run $results_table: Generating Monolinks... \n";};
-	generate_monolink_peptides($results_dbh,  $results_table,   $reactive_site, $mono_mass_diff);
-    }
-    
-    if ( is_verbose == 1 ) {warn "Run $results_table: Generating Modifications... \n";};
-    generate_modified_peptides($results_dbh,  $results_table,   \%modifications);
 
     if (is_verbose == 1 ) {warn "Run $results_table: Finding doublets...  \n";};
     my @peaklist = loaddoubletlist_db(
@@ -182,7 +158,8 @@ sub generate_page {
                                     $xlinker_mass,         $seperation,         $isotope,
                                     $reactive_site,        \%modifications,     $ms2_error,
                                     \%protein_residuemass, \%ms2_fragmentation, $threshold,
-                                    $no_xlink_at_cut_site, $fast_mode,		$amber_codon
+                                    $no_xlink_at_cut_site, $fast_mode,		$amber_codon,
+				    $use_previous_settings
     );
 
     if (defined $decoy) 

@@ -28,6 +28,7 @@ my $path = installed();
 
 print_page_top_bootstrap("Home");
 my $version = version();
+my $dbh = connect_conf_db;
 
 print <<ENDHTML;
 <div class="row">
@@ -43,6 +44,36 @@ print <<ENDHTML;
 <form method="POST" enctype="multipart/form-data" action="crosslinker.pl" target="_blank">
 <fieldset>
 <legend>Settings</legend><br/>
+ENDHTML
+
+my $development = get_conf($dbh, 'development');
+my $development_setting = $development->fetchrow_hashref();
+
+if ( $development_setting->{'setting1'} == 1) {
+    print '
+<div class="row">
+<div class="span8">
+ <label>Use Previous Settings</label>
+    <select name="use_previous"> 
+    <option value="0" selected="True">New Settings</options>';
+
+my $dbh_runs = connect_settings;
+create_settings ($dbh_runs);
+my $runs = get_runs($dbh_runs);
+
+while ((my $runs = $runs->fetchrow_hashref)) {
+    print "<option value='" . $runs->{'name'} . "' ";
+    print ">" .$runs->{'name'}. ". " . $runs->{'description'} . " </option>";
+}
+$runs->finish();
+
+print'     </select> <hr/>
+    <br/>
+</div>
+</div>
+';
+}
+print <<ENDHTML;
 
 <div class="row">
 
@@ -51,7 +82,7 @@ print <<ENDHTML;
     <select name="enzyme"> 
 ENDHTML
 
-my $dbh = connect_conf_db;
+
 my $enzymes = get_conf($dbh, 'enzyme');
 
 while ((my $enzyme = $enzymes->fetchrow_hashref)) {
@@ -99,8 +130,6 @@ print <<ENDHTML;
 
 ENDHTML
 
-my $development = get_conf($dbh, 'development');
-my $development_setting = $development->fetchrow_hashref();
 
 if ( $development_setting->{'setting1'} == 1) {
     print '
