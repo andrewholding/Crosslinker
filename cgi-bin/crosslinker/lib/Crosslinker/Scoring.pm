@@ -411,6 +411,7 @@ sub calc_score {
     my %ms2_fragmentation = %{$ms2_fragmentation_ref};
     if (!defined $amber_codon) {$amber_codon = 0};
 
+   
     # my $sequence  = $sequence;
     my $xlink = $xlinker_mass;
     my @masses = split "\n", $data;
@@ -650,6 +651,13 @@ sub calc_score {
 
         if ($sequence !~ /-/) { $xlink_pos[1] = [ (0) ] }
         ;    #Make sure monolinks actually search for position if $xlink_pos[1] was empty it would never loop.
+      
+
+	if ($sequence !~ /[$xlink_res]/) { $xlink_pos[0] = [ (0) ]};
+
+#         if ( scalar(@xlink_pos) == 0) { $xlink_pos[0] = [ (0) ], warn $sequence }
+
+
         @peptides = split /-/, $sequence;
         my @xlink_half;
         for (my $i = 0 ; $i < $#peptides + 1 ; $i++) {

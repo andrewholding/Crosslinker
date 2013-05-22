@@ -537,7 +537,7 @@ sub save_settings {
     }
 
 
-    if ($use_previous_settings > 0) {
+    if (defined $use_previous_settings && $use_previous_settings > 0) {
 	    my $settings_sql = $settings_dbh->prepare(
 		" insert into modifications (run_id, mod_id, mod_name, mod_mass, mod_residue, mod_type) select ?, mod_id, mod_name, mod_mass, mod_residue, mod_type from modifications where run_id = ?;"
 	    );
@@ -1068,13 +1068,16 @@ my $pm = Parallel::ForkManager->new($threads);
 						      )VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
     );
 
+
+	my $SQL_only_labelled = '';
+	if ($isotope ne 'none') {$SQL_only_labelled = "AND (xlink = 1 or monolink <> 0)"};
 	my $peptides;
 	if ($use_previous_settings == 0) 
 	  {
-	     $peptides = $results_dbh_fork->prepare("select * from peptides where results_table = ? AND (xlink = 1 or monolink <> 0) and mass between ? and ?");
+	     $peptides = $results_dbh_fork->prepare("select * from peptides where results_table = ? $SQL_only_labelled and mass between ? and ?");
 	     $peptides->execute( $results_table,  $peak->{monoisotopic_mw} / $max_delta , $peak->{monoisotopic_mw} *$max_delta );
 	  } else {
-	     $peptides = $results_search_dbh_fork->prepare("select * from peptides where results_table = ? AND (xlink = 1 or monolink <> 0) and mass between ? and ?");
+	     $peptides = $results_search_dbh_fork->prepare("select * from peptides where results_table = ? $SQL_only_labelled and mass between ? and ?");
 	     $peptides->execute( $use_previous_settings,  $peak->{monoisotopic_mw} / $max_delta , $peak->{monoisotopic_mw} *$max_delta );
 	  }
  
