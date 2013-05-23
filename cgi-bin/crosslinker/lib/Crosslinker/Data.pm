@@ -1007,6 +1007,7 @@ my $pm = Parallel::ForkManager->new($threads);
 	  }
 
         if (check_state($settings_dbh_fork, $results_table) == -4) {
+	    $pm->finish;
             return %fragment_score;
         }
 

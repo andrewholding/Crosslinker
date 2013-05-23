@@ -51,7 +51,7 @@ sub get_conf {
 
 sub get_runs {
     my ($dbh) = @_;
-    my $sql = $dbh->prepare("SELECT * FROM settings WHERE use_previous = 0 ORDER BY name ASC");
+    my $sql = $dbh->prepare("SELECT * FROM settings WHERE use_previous = 0 and finished = -1 ORDER BY name ASC");
     _retry 15, sub { $sql->execute() };
     return $sql;
 
