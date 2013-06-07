@@ -67,9 +67,9 @@ if ($scan == -1) {
 #                     #
 #######################
 
-# my ( $fh, $filename ) = tempfile();
-# Tempfile is needed on Scientific Linux as for some reason STDOUT doesn't go to browser
-# as it does with other Linux distros.
+ my ( $fh, $filename ) = tempfile();
+# Tempfile is needed on as for some reason STDOUT doesn't go to browser
+# on some Linux distros.
 
 ########################
 #                      #
@@ -136,6 +136,7 @@ my $chart = Chart::Gnuplot->new(
     imagesize => '320, 240',
     xtics     => { labelfmt => '', },
     ytics     => { labelfmt => '', },
+    output     => $filename,
 
 );
 
@@ -214,6 +215,16 @@ my $impulses4 =
 binmode STDOUT;
 $chart->svg;
 $chart->plot2d($impulses, $impulses2, $impulses3, $impulses4);
+
+seek $fh, 0, 0;
+
+while (<$fh>) {
+   print "$_";
+}
+
+close $fh;
+
+
 $top_hits->finish();
 $results_dbh->disconnect();
 exit;
