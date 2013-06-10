@@ -13,7 +13,7 @@ our @EXPORT = ('version', 'installed', 'sql_type', 'no_of_threads', 'is_verbose'
 sub load_setting{
 my ($setting_name, $setting) = @_;
 
-open RC_FILE, "<", 'crosslinkerrc';
+open RC_FILE, "<", 'crosslinkerrc' or return $setting;
 while (my $line = <RC_FILE>) {
 	chomp $line;
 	my @settings = split '=', $line;
