@@ -43,9 +43,9 @@ Update Apache's default site file or create a new site definintion to point to t
 
 	Change following lines:
 
-	DocumentRoot /var/www" to DocumentRoot /srv/www/Crosslinker/html
+	DocumentRoot /var/www to DocumentRoot /srv/www/Crosslinker/html
 
-	<Directory /var/www/>" to <Directory /srv/www/Crosslinker/html>
+	<Directory /var/www/> to <Directory /srv/www/Crosslinker/html>
 
  	ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
  	<Directory "/usr/lib/cgi-bin">
