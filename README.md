@@ -22,22 +22,40 @@ Required packages not included in the standard Debian installation are:
 
 These can be installed with 'apt-get' or 'aptitude'.
 
-	e.g. apt-get install apache2 
+	apt-get install apache2 
 
 Make and change to directory '/srv/www'. 
 
-	e.g. mkdir /srv/www; cd /srv/www
+	mkdir /srv/www
+	cd /srv/www
 
 Use Git to obtain the latest version of Crosslinker and download it into the current directory. 
 
-	e.g. git clone git://github.com/andrewholding/Crosslinker.git
+	git clone git://github.com/andrewholding/Crosslinker.git
 
 Change ownership of the folder to www-data with chown.
 
-	e.g. chown www-data:www-data /srv/www -R
+	chown www-data:www-data /srv/www -R
 
 Update Apache's default site file or create a new site definintion to point to the Crosslinker install.
 
-	e.g. nano /etc/apache2/sites-available/default
+	nano /etc/apache2/sites-available/default
+
+	Change following lines:
+
+	DocumentRoot /var/www to "DocumentRoot /srv/www/Crosslinker/html"
+
+	<Directory /var/www/>" to "<Directory /srv/www/Crosslinker/html>"
+
+ 	ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
+ 	<Directory "/usr/lib/cgi-bin">
+ 	
+		to		
+
+	ScriptAlias /cgi-bin/ /srv/www/Crosslinker/cgi-bin/
+ 	<Directory "/srv/www/Crosslinker/cgi-bin">
+
 
 You should be now able to access Crosslinker by connecting to the server with a webrowser.
+
+	http://localhost/
