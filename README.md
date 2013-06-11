@@ -55,6 +55,10 @@ Update Apache's default site file or create a new site definintion to point to t
 	ScriptAlias /cgi-bin/ /srv/www/Crosslinker/cgi-bin/
  	<Directory "/srv/www/Crosslinker/cgi-bin">
 
+Restart the web server
+
+	/etc/init.d/apache2 restart
+
 
 You should be now able to access Crosslinker by connecting to the server with a webrowser.
 
