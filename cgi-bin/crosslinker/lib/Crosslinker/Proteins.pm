@@ -533,7 +533,8 @@ sub calculate_crosslink_peptides {
     my $count = 0;
   
     my $threads = 0;
-    if (sql_type eq 'mysql') {$threads = no_of_threads};
+    if (sql_type eq 'mysql') {$threads = 1};
+# 		 Threads = 1 to avoid a deadlock issue. Needs to be fixed
     my $pm = Parallel::ForkManager->new($threads);
 
 
