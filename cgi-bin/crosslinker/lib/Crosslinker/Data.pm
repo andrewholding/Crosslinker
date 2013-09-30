@@ -1603,6 +1603,7 @@ sub import_mgf    #Enters the uploaded MGF into a SQLite database
     while (<$file>) {
         if ($_ =~ "^BEGIN IONS") { $dataset = $dataset + 1; $line{'abundance'} = 0 }
         elsif ($_ =~ "^PEPMASS") {
+             my $mystring = $_;	
             if ($mystring =~ m/=(.*?) /)      { $line{'mz'}        = $1;}
 	    elsif ($mystring =~ m/=(.*?)[\r\n]/) { $line{'mz'}     = $1;}
             if ($mystring =~ m/ (.*?)[\r\n]/) { $line{'abundance'} = $1 ;}
