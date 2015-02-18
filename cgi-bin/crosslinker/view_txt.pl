@@ -86,7 +86,7 @@ if ($is_finished != '-1') {
     print "** Warning: Data analysis not finished **\n";
 }
 print "\nCrosslinks\n";
-my $top_hits = $results_dbh->prepare("SELECT * FROM results WHERE name=? and SCORE > 0 ORDER BY score DESC");
+my $top_hits = $results_dbh->prepare("SELECT * FROM results WHERE name=? and SCORE > 0 and sequence1_name not like '>decoy%' and sequence2_name not like '>decoy%' ORDER BY score DESC");
 $top_hits->execute($table);
 print_results_text(
                    $top_hits,         $mass_of_hydrogen, $mass_of_deuterium, $mass_of_carbon12,

@@ -158,7 +158,7 @@ sub print_results_text {
     my $finish_division = ",";
     my $is_it_xlink     = 0;
 
-    # Chain 1	Chain 2	Position1	Position2	Fragment and Position	Score	Charge	Mass	PPM	Mod
+    # Chain 1	Chain 2	Position1	Position2	Fragment and Position	Score	Charge	Mass	PPM	Mod FDR
 
     print "$new_line#"
       . $finish_division
@@ -207,6 +207,8 @@ sub print_results_text {
       . "Monolink Mass"
       . $finish_division
       . $new_division . "Mod"
+      . $finish_division
+      . $new_division . "FDR"
       . $finish_division
       . $new_division
       . "Common Ions"
@@ -337,6 +339,9 @@ sub print_results_text {
                 print $modifications{ $top_hits_results->{'modification'} }{Name};
                 print $finish_division;
 
+	         my $fdr = sprintf("%.5f", $top_hits_results->{'FDR'} * 100);
+                print $new_division, $fdr,    $finish_division;
+
                 print $new_division, $top_hits_results->{'matched_common'},    $finish_division;
                 print $new_division, $top_hits_results->{'matched_crosslink'}, $finish_division;
 
@@ -412,6 +417,9 @@ sub print_results_text {
                 }
                 print "$modifications{$top_hits_results->{'modification'}}{Name}";
                 print $finish_division;
+
+	        my $fdr = sprintf("%.5f", $top_hits_results->{'FDR'} * 100);
+                print $new_division, $fdr,    $finish_division;
 
                 print $new_division, $top_hits_results->{'matched_common'},    $finish_division;
                 print $new_division, $top_hits_results->{'matched_crosslink'}, $finish_division;
